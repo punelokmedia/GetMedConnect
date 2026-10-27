@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createApp } from '../src/app.js';
+import { createApp } from '../src/enquiry-app.js';
 
 test('API validates consent, routes patient and clinic columns, and handles storage failure', async () => {
   const rows = [];
