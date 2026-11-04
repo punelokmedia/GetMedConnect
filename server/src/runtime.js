@@ -1,9 +1,7 @@
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'node:url';
+import './env.js';
 import { google } from 'googleapis';
 import { createApp } from './enquiry-app.js';
 
-if (!process.env.VERCEL) dotenv.config({ path: fileURLToPath(new URL('../.env', import.meta.url)) });
 let sheets;
 const configured = Boolean(process.env.GOOGLE_SHEET_ID && process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
 if (configured) {

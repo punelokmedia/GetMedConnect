@@ -1,5 +1,9 @@
 # GetMedConnect
 
+## Admin workspace
+
+The `admin/` workspace provides leads, doctor registration, appointment assignment, and conversion tracking. See [admin setup, Neon connection and verification](admin/README.md). Run `npm.cmd run dev:admin` after configuring `ADMIN_API_TOKEN` in `server/.env`. Admin opens at http://127.0.0.1:5175. It uses Neon PostgreSQL when `DATABASE_URL` is set and enables live updates when the Realtime environment is present. Website enquiries still use Google Sheets. Doctor logins are created and managed in Admin → Doctors; see [doctor access flow](doctor/ADMIN_FLOW.md). Run `npm.cmd run dev:all` to start all apps together, including the doctor portal on port 5174.
+
 Local React/Vite frontend and Express API for patient and clinic enquiries. This is a development starter, not a live clinic directory or appointment booking service.
 
 ## Homepage
