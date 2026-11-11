@@ -65,6 +65,8 @@ Approve privacy and terms pages, consent wording, business contacts, supported l
 
 ## Production: four separate Vercel projects
 
+The root package.json override pins only jwks-rsa's jose dependency to the CommonJS-compatible 5.10.0 release. Keep this override and package-lock.json together: Firebase Admin otherwise pulls in ESM-only jose 6, which can crash the Vercel runtime with ERR_REQUIRE_ESM before API/CORS handlers start. The server package also specifies Node.js 24.x. The firebase-runtime regression test checks startup without require(esm) and validates RSA signing-key conversion and rejection of a tampered message.
+
 Deploy these as four projects from the same repository. Set each project's Root Directory to its folder so it uses that folder's vercel.json. Enable access to source files outside the Root Directory if Vercel requests it for workspace dependencies. Each frontend uses npm run build, output dist, and the Vite preset. The server uses the Express preset and src/index.js as its auto-detected entry. Use Node.js 24.x. Remove old dashboard overrides that conflict with these settings.
 
 | Project | Root Directory | Production URL |
