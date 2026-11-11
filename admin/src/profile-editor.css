@@ -1,0 +1,11 @@
+.admin-profile-editor { width: min(1050px, 96vw); max-height: 94vh; overflow-y: auto; background: #f8fdfb; padding: 28px; border-radius: 20px; box-shadow: 0 20px 70px #12382d33; }
+.admin-profile-editor .profile-editor { margin: 0; }
+.admin-profile-editor .mint-avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #dff5ec; color: #00755f; flex-shrink: 0; }
+.admin-profile-editor svg { width: 24px; height: 24px; }
+.admin-profile-editor .mint-button { display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #9dd8c6; background: white; color: #005c45; min-height: 46px; padding: 10px 20px; border-radius: 12px; }
+.admin-profile-editor .mint-button.solid { background: #006d57; color: white; }
+.admin-profile-note { font-size: 12px; line-height: 1.6; color: #526c64; margin: 0 0 20px; }
+.admin-profile-editor .profile-modes label { display: flex; flex-direction: row; }
+.admin-profile-editor .profile-modes input { width: 19px; }
+.admin-profile-editor button:disabled { opacity: .6; }
+@media (max-width: 600px) { .admin-profile-editor { padding: 18px; } }

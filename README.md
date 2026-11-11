@@ -63,40 +63,35 @@ Tests cover validation, consent, row routing and column alignment, unknown types
 
 Approve privacy and terms pages, consent wording, business contacts, supported locations, and brand assets. Add durable idempotency, stronger bot protection, proxy-aware rate limiting, retention procedures, and monitoring. Review provider-sharing consent before forwarding any enquiries. Do not collect medical records in the enquiry form. The local API binds to loopback; configure deployment network binding and exact frontend CORS origin for hosting. No deployment has been performed.
 
-## Deploy as one Vercel project with two services
+## Production deployment on Vercel
 
-Keep the Vercel project's Root Directory at the repository root (`.`) and select Node.js 24.x. The root `vercel.json` defines two independently built services:
+Use one Vercel project with Root Directory at the repository root (.), Framework Preset Other, and Node.js 24.x. Leave dashboard build/output overrides off so vercel.json supplies npm run build:production and dist. Install dependencies with npm ci.
 
-| Service | Root | Framework | Public traffic |
-| --- | --- | --- | --- |
-| `client` | `client` | Vite | All paths except `/api/*` |
-| `server` | `server` | Express | `/api/*` |
+The production build packages the public client at /, admin at /admin/, and doctor portal at /doctor/. Each portal has its own asset prefix. The root api/index.js function exports the Express app, and /api/* routes to that function before frontend fallback routes. Existing static assets are served directly by Vercel.
 
-The API rewrite runs first and preserves the original path: `/api/enquiries/patient` reaches the Express route with that same path. The client catch-all runs last. The Express service exports its app from `server/src/index.js`; no root `api/` Function is used.
+Set these variables in the Vercel Production environment; local ignored .env files are not uploaded:
 
-The browser calls relative `/api` URLs in both production and development. No internal service bindings are declared: the static Vite frontend has no server-side function that calls another service, and the API only calls the external Google Sheets API. A runtime service binding cannot be read in a Vite build or browser. If a server-side caller is added later, declare its binding on that calling service and read the injected variable at runtime.
-
-Add these Vercel project environment variables for Production (and Preview only if preview forms should use the same spreadsheet):
-
-| Name | Value |
+| Variable | Purpose |
 | --- | --- |
-| `GOOGLE_SHEET_ID` | The spreadsheet ID from `server/.env`. |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | The complete downloaded service-account JSON, without the outer single quotes used in `.env`. Preserve the private key's escaped `\n` characters. |
+| DATABASE_URL | Production Neon pooled connection; required at server startup. |
+| DATABASE_URL_UNPOOLED | Direct connection for migrations run separately. |
+| ADMIN_API_TOKEN | Private token entered on the admin sign-in screen. |
+| FIREBASE_SERVICE_ACCOUNT_JSON | Complete Firebase service-account JSON for doctor authentication. |
+| FIREBASE_PROJECT_ID | Matching Firebase project ID, if configured. |
+| VITE_FIREBASE_API_KEY | Firebase web app API key, used when building the doctor portal. |
+| VITE_FIREBASE_AUTH_DOMAIN | Firebase web app auth domain. |
+| VITE_FIREBASE_PROJECT_ID | Firebase web app project ID. |
+| VITE_FIREBASE_APP_ID | Firebase web app ID. |
+| GOOGLE_SHEET_ID | Spreadsheet receiving website enquiries. |
+| GOOGLE_SERVICE_ACCOUNT_JSON | Complete Google service-account JSON for Sheets. |
+| NEON_REALTIME_URL / NEON_REALTIME_SECRET | Optional admin realtime connection. |
 
-No `VITE_API_URL`, `PORT`, or `FRONTEND_ORIGIN` is required for the shared-domain deployment. Credentials must never use a `VITE_` prefix. Local `.env` files remain ignored by Git. Redeploy after changing Vercel environment variables.
+Never prefix server secrets with VITE_. Firebase web app configuration is intended for the browser. Do not use a local service-account file path in production; supply the JSON variable. Redeploy after changing environment variables. Add your production domain to Firebase Authentication authorized domains and, if using Neon Realtime, its allowed origins.
 
-### Test service routing locally
+Run migrations separately against the production direct connection with npm.cmd run db:migrate. This is not performed automatically during every build.
 
-From the repository root with a current Vercel CLI installed:
+After deployment, verify /api/health returns JSON, /api/doctors returns JSON, and /admin/ and /doctor/ load their own portals. Then verify admin login, doctor login, a profile save, and an enquiry submission. Health alone does not verify database or Sheets connectivity.
 
-```powershell
-vercel dev --local
-```
+For local development, npm.cmd run dev:all starts each app on its development port with Vite proxying /api to port 4000. VITE_API_URL is unused.
 
-Use the shared URL printed by Vercel. Check `/api/health` for `{"ok":true}`, load the homepage and images, and submit each enquiry type. Vercel handles public routing and injects any declared runtime bindings. For a cloud-linked local session, use `vercel dev` and configure the Google variables in Vercel's Development environment. For a local-only session, supply the two Google variables in the process environment to test storage.
-
-The alternative `npm.cmd run dev` remains available: Vite proxies `/api` to the local API on port 4000. Old `VITE_API_URL` entries in local files are unused.
-
-After deployment, check `https://YOUR-DOMAIN/api/health`, then submit one patient and one clinic enquiry and verify the spreadsheet rows. Health confirms the API is running; form submission verifies Sheets access. No cloud deployment has been performed by this setup.
-
-The rate limiter uses instance memory, so its limit is not shared across instances or restarts. Use a shared store or platform-level protection when a strict global limit is needed.
+The rate limiter uses instance memory; its limit is not shared across instances or restarts.

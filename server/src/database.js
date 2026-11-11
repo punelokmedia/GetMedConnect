@@ -1,5 +1,6 @@
 import './env.js';
 import pg from 'pg';
+import { publicColumns } from './doctor-profiles.js';
 import { attachDatabasePool } from '@vercel/functions';
 
 export function createPool(connectionString = process.env.DATABASE_URL) {
@@ -35,11 +36,11 @@ export function createPostgresStore(pool) {
   return {
     async findPublicDoctors({ q, city, specialty, page }) {
       const literal = value => `%${value.replace(/[\\%_]/g, '\\$&')}%`;
-      const result = await pool.query(`SELECT id, name, specialty, city FROM gmc.doctors WHERE status = 'Active' AND (name ILIKE $1 OR specialty ILIKE $1 OR city ILIKE $1) AND city ILIKE $2 AND specialty ILIKE $3 ORDER BY name, id LIMIT 13 OFFSET $4`, [literal(q), literal(city), literal(specialty), (page - 1) * 12]);
+      const result = await pool.query(`SELECT ${publicColumns} FROM gmc.doctors WHERE status = 'Active' AND (name ILIKE $1 OR specialty ILIKE $1 OR city ILIKE $1) AND city ILIKE $2 AND specialty ILIKE $3 ORDER BY name, id LIMIT 13 OFFSET $4`, [literal(q), literal(city), literal(specialty), (page - 1) * 12]);
       return result.rows;
     },
     async getPublicDoctor(id) {
-      const result = await pool.query("SELECT id, name, specialty, city FROM gmc.doctors WHERE id = $1 AND status = 'Active'", [id]);
+      const result = await pool.query(`SELECT ${publicColumns} FROM gmc.doctors WHERE id = $1 AND status = 'Active'`,  [id]);
       return result.rows[0];
     },
     async read() {

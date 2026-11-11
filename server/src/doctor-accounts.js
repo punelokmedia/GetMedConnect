@@ -3,6 +3,8 @@ import rateLimit from 'express-rate-limit';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 
+import { profileSchema, profileFailure } from './doctor-profiles.js';
+
 const accountView = account => ({ doctorId: account.doctorId, loginEmail: account.loginEmail, loginEnabled: account.loginEnabled, mustChangePassword: account.mustChangePassword });
 const fail = (status, message) => Object.assign(new Error(message), { status });
 const temporaryPassword = () => `Gmc!${randomBytes(18).toString('base64url')}`;
@@ -69,7 +71,7 @@ export function doctorAccountAdminRouter(service) {
   return router;
 }
 
-export function createDoctorPortalRouter({ accounts, auth }) {
+export function createDoctorPortalRouter({ accounts, auth, profiles = null }) {
   const router = express.Router();
   router.use(rateLimit({ windowMs: 60000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false }));
   router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
@@ -87,7 +89,7 @@ export function createDoctorPortalRouter({ accounts, auth }) {
     next();
   });
   router.get('/me', async (req, res) => {
-    const doctor = await accounts.doctor(req.doctorAccount.doctorId);
+    const doctor = profiles ? await profiles.get(req.doctorAccount.doctorId) : await accounts.doctor(req.doctorAccount.doctorId);
     res.json({ doctor, account: accountView(req.doctorAccount) });
   });
   router.post('/password', async (req, res) => {
@@ -102,6 +104,16 @@ export function createDoctorPortalRouter({ accounts, auth }) {
   router.use((req, res, next) => {
     if (req.doctorAccount.mustChangePassword) return res.status(403).json({ error: 'Change your temporary password before accessing patients.', code: 'PASSWORD_CHANGE_REQUIRED' });
     next();
+  });
+  router.put('/profile', async (req, res) => {
+    if (!profiles) return res.status(503).json({ error: 'Doctor profile database is not configured.' });
+    const parsed = profileSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Check your profile fields.', fields: parsed.error.flatten().fieldErrors });
+    try {
+      const doctor = await profiles.update(req.doctorAccount.doctorId, parsed.data);
+      if (!doctor) return res.status(404).json({ error: 'Doctor not found.' });
+      res.json({ doctor });
+    } catch (error) { profileFailure(error, res); }
   });
   router.get('/appointments', async (req, res) => res.json({ appointments: await accounts.appointments(req.doctorAccount.doctorId) }));
   router.patch('/appointments/:id', async (req, res) => {

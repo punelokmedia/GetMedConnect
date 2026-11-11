@@ -6,6 +6,8 @@ import { dirname } from 'node:path';
 import { z } from 'zod';
 import { doctorAccountAdminRouter } from './doctor-accounts.js';
 
+import { profileSchema, profileFailure } from './doctor-profiles.js';
+
 const text = z.string().trim().min(1).max(200);
 const phone = z.string().trim().regex(/^\+?[\d ()-]{7,20}$/);
 const leadSchema = z.object({ name: text, phone, specialty: text, city: text, source: text.default('Admin'), status: z.enum(['New', 'Contacted', 'Qualified', 'Closed']).default('New') });
@@ -35,7 +37,7 @@ export function createAdminStore(path) {
   };
 }
 
-export function createAdminRouter({ store, token, live = null, accountService = null }) {
+export function createAdminRouter({ store, token, live = null, accountService = null, profiles = null }) {
   const router = express.Router();
   router.use(rateLimit({ windowMs: 60000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false }));
   router.use((req, res, next) => {
@@ -46,6 +48,24 @@ export function createAdminRouter({ store, token, live = null, accountService = 
     next();
   });
   if (accountService) router.use(doctorAccountAdminRouter(accountService));
+  router.get('/doctors/:id/profile', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    if (!profiles) return res.status(503).json({ error: 'Doctor profile database is not configured.' });
+    if (!z.uuid().safeParse(req.params.id).success) return res.status(400).json({ error: 'Invalid doctor ID.' });
+    const doctor = await profiles.get(req.params.id);
+    if (!doctor) return res.status(404).json({ error: 'Doctor not found.' });
+    res.json({ doctor });
+  });
+  router.put('/doctors/:id/profile', async (req, res) => {
+    if (!profiles) return res.status(503).json({ error: 'Doctor profile database is not configured.' });
+    const parsed = profileSchema.safeParse(req.body);
+    if (!z.uuid().safeParse(req.params.id).success || !parsed.success) return res.status(400).json({ error: 'Check your profile fields.' });
+    try {
+      const doctor = await profiles.update(req.params.id, parsed.data);
+      if (!doctor) return res.status(404).json({ error: 'Doctor not found.' });
+      res.json({ doctor });
+    } catch (error) { profileFailure(error, res); }
+  });
   router.get('/records', async (_req, res) => { res.set('Cache-Control', 'no-store'); res.json(await store.read()); });
   router.get('/live/:collection', async (req, res) => {
     res.set('Cache-Control', 'no-store');

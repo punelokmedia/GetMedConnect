@@ -1,7 +1,6 @@
 import express from 'express';
 import { app as enquiryApp, configured } from './runtime.js';
-import { createAdminRouter, createAdminStore } from './admin.js';
-import { fileURLToPath } from 'node:url';
+import { createAdminRouter } from './admin.js';
 import { createPool, createPostgresStore } from './database.js';
 import { createLiveService } from './realtime.js';
 import { createPublicDoctorsRouter } from './public-doctors.js';
@@ -9,19 +8,28 @@ import { getDoctorAuth } from './firebase-admin.js';
 import { createDoctorAccountStore } from './doctor-account-store.js';
 import { createDoctorAccountService, createDoctorPortalRouter } from './doctor-accounts.js';
 
+import { createDoctorProfileStore } from './doctor-profiles.js';
+
 const app = express();
-const pool = process.env.DATABASE_URL ? createPool() : null;
-const store = pool ? createPostgresStore(pool) : createAdminStore(process.env.ADMIN_DATA_FILE || fileURLToPath(new URL('../data/admin.json', import.meta.url)));
-const accounts = pool ? createDoctorAccountStore(pool) : null;
+const pool = createPool();
+const store = createPostgresStore(pool);
+const accounts = createDoctorAccountStore(pool);
 const auth = getDoctorAuth();
-app.use('/api/doctors', createPublicDoctorsRouter({ store }));
-app.use('/api/doctor', express.json({ limit: '16kb' }), createDoctorPortalRouter({ accounts, auth }));
-app.use('/api/admin', express.json({ limit: '16kb' }), createAdminRouter({
+const profiles = createDoctorProfileStore(pool);
+app.use('/api/doctors', createPublicDoctorsRouter({ store, profiles }));
+app.use('/api/doctor', express.json({ limit: '400kb' }), createDoctorPortalRouter({ accounts, auth, profiles }));
+app.use('/api/admin', express.json({ limit: '400kb' }), createAdminRouter({
   token: process.env.ADMIN_API_TOKEN,
   store,
+  profiles,
   live: createLiveService(),
   accountService: createDoctorAccountService({ accounts, auth }),
 }));
+app.use((error, _req, res, next) => {
+  if (error.type === 'entity.too.large') return res.status(413).json({ error: 'Profile is too large. Choose a smaller photo.' });
+  if (error.type === 'entity.parse.failed') return res.status(400).json({ error: 'Invalid JSON request.' });
+  next(error);
+});
 app.use(enquiryApp);
 
 // Vercel loads the Express export; npm run dev starts the local listener.

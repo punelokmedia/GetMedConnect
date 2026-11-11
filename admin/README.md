@@ -1,6 +1,8 @@
 # GetMedConnect admin foundation
 
-React/Vite workspace with a protected Express API for manually entered leads, doctor registry records, and appointments. When `DATABASE_URL` is configured it uses Neon PostgreSQL. Configured Neon Realtime keeps all three collections current across open admin sessions. Without a database URL, local JSON storage remains available. No demo patient records are included.
+React/Vite workspace with a protected Express API for manually entered leads, doctor registry records, and appointments. The API requires `DATABASE_URL` and always uses Neon PostgreSQL; it refuses to start without a database URL. Configured Neon Realtime keeps all three collections current across open admin sessions. No demo patient records are included.
+
+To import legacy local data, run `npm.cmd run db:import-admin`. This imports leads, doctors, and appointments in one transaction, verifies every local ID exists in Neon, preserves existing cloud rows by ID, and keeps the local JSON file as a backup. Other uniqueness conflicts roll back the import for review. `ADMIN_DATA_FILE` can select the import source; the running API does not use it.
 
 ## Start
 
@@ -38,11 +40,11 @@ Conversion rate is converted appointments divided by all completed appointments,
 ## Architecture and next integrations
 
 - `admin/src/main.jsx`: overview, lead management, registry, booking and outcome controls.
-- `server/src/admin.js`: token authorization, Zod validation, API and local JSON persistence fallback.
+- `server/src/admin.js`: token authorization, Zod validation, API and a local JSON helper retained for isolated tests.
 - `server/src/database.js`: pooled `pg` connections and transactional PostgreSQL persistence; Vercel pool lifecycle integration.
 - `server/migrations/001_admin.sql`: typed records, foreign keys, conversion checks and unique doctor appointment slots.
 - `server/src/realtime.js` and `admin/src/realtime.jsx`: authorized sealed live queries and React subscriptions.
-- `server/data/admin.json`: ignored local records, configurable with `ADMIN_DATA_FILE`.
+- `server/data/admin.json`: ignored legacy backup records; no longer used by the running API.
 - Existing landing-page submissions continue using Google Sheets. They are not imported into this workspace yet.
 - Doctor login access is provisioned in Admin → Doctors. See [doctor setup and access flow](../doctor/ADMIN_FLOW.md). A registry email alone grants no access; an administrator-created Firebase UID link and enabled account are required.
 
