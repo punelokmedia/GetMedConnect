@@ -1,3 +1,4 @@
+import { apiFetch } from './api.js';
 import React, { useEffect, useState } from 'react';
 import { browserLocalPersistence, browserSessionPersistence, onAuthStateChanged, setPersistence, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from './firebase';
@@ -20,7 +21,7 @@ export function DoctorPortal() {
   useEffect(() => auth ? onAuthStateChanged(auth, next => { setUser(next); setProfile(null); setAppointments([]); setChecking(Boolean(next)); setPasswordForm(false); }) : undefined, []);
   async function request(currentUser, path, options = {}) {
     const token = await currentUser.getIdToken();
-    const response = await fetch(`/api/doctor${path}`, { ...options, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, cache: 'no-store' });
+    const response = await apiFetch(`/api/doctor${path}`, { ...options, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, cache: 'no-store' });
     const result = await response.json();
     if (!response.ok) throw Object.assign(new Error(result.error || 'Could not load the doctor workspace.'), { status: response.status });
     return result;
