@@ -8,7 +8,13 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "check:runtime": "node --no-experimental-require-module scripts/check-runtime.cjs"
+  },
+  "overrides": {
+    "jwks-rsa": {
+      "jose": "5.10.0"
+    }
   },
   "dependencies": {
     "@neon/realtime": "^0.1.2",

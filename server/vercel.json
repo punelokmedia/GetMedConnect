@@ -1,3 +1,4 @@
 {
-  "framework": "express"
+  "framework": "express",
+  "buildCommand": "npm run check:runtime"
 }
