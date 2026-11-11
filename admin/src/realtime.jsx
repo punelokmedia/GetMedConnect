@@ -1,9 +1,10 @@
+import { apiFetch } from './api.js';
 import React, { useCallback, useEffect, useState } from 'react';
 import { createRealtimeClient } from '@neon/realtime/client';
 import { RealtimeProvider, useLiveQuery } from '@neon/realtime-react';
 
 async function fetchQuery(token, collection, signal) {
-  const response = await fetch(`/api/admin/live/${collection}`, { signal, headers: { Authorization: `Bearer ${token}` } });
+  const response = await apiFetch(`/api/admin/live/${collection}`, { signal, headers: { Authorization: `Bearer ${token}` } });
   if (!response.ok) throw new Error(response.status === 503 ? 'Live updates are not configured. Use Refresh.' : 'Live connection unavailable. Use Refresh.');
   return response.json();
 }

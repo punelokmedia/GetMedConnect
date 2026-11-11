@@ -1,3 +1,4 @@
+import { apiFetch } from './api.js';
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
@@ -20,7 +21,7 @@ function App() {
   const [editingDoctor, setEditingDoctor] = useState(null);
   const collection = page.toLowerCase();
   async function api(path = '/records', options = {}) {
-    const response = await fetch(`/api/admin${path}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
+    const response = await apiFetch(`/api/admin${path}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Request failed.');
     return result;

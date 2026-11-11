@@ -63,35 +63,37 @@ Tests cover validation, consent, row routing and column alignment, unknown types
 
 Approve privacy and terms pages, consent wording, business contacts, supported locations, and brand assets. Add durable idempotency, stronger bot protection, proxy-aware rate limiting, retention procedures, and monitoring. Review provider-sharing consent before forwarding any enquiries. Do not collect medical records in the enquiry form. The local API binds to loopback; configure deployment network binding and exact frontend CORS origin for hosting. No deployment has been performed.
 
-## Production deployment on Vercel
+## Production: four separate Vercel projects
 
-Use one Vercel project with Root Directory at the repository root (.), Framework Preset Other, and Node.js 24.x. Leave dashboard build/output overrides off so vercel.json supplies npm run build:production and dist. Install dependencies with npm ci.
+Deploy these as four projects from the same repository. Set each project's Root Directory to its folder so it uses that folder's vercel.json. Enable access to source files outside the Root Directory if Vercel requests it for workspace dependencies. Each frontend uses npm run build, output dist, and the Vite preset. The server uses the Express preset and src/index.js as its auto-detected entry. Use Node.js 24.x. Remove old dashboard overrides that conflict with these settings.
 
-The production build packages the public client at /, admin at /admin/, and doctor portal at /doctor/. Each portal has its own asset prefix. The root api/index.js function exports the Express app, and /api/* routes to that function before frontend fallback routes. Existing static assets are served directly by Vercel.
+| Project | Root Directory | Production URL |
+| --- | --- | --- |
+| Client | client | https://getmedconnect.techifylabs.in |
+| Admin | admin | https://get-med-connect.vercel.app |
+| Doctor | doctor | https://get-med-connect-3tdz.vercel.app |
+| Server | server | https://get-med-connect-gbsu.vercel.app |
 
-Set these variables in the Vercel Production environment; local ignored .env files are not uploaded:
+Set VITE_API_URL=https://get-med-connect-gbsu.vercel.app in the Production environment of ALL THREE frontend projects. Do not append /api. It is a public URL, not a secret. Frontend environment variables are built into the bundle, so rebuild/redeploy after setting them. Locally leave VITE_API_URL empty or point it to http://localhost:4000.
 
-| Variable | Purpose |
-| --- | --- |
-| DATABASE_URL | Production Neon pooled connection; required at server startup. |
-| DATABASE_URL_UNPOOLED | Direct connection for migrations run separately. |
-| ADMIN_API_TOKEN | Private token entered on the admin sign-in screen. |
-| FIREBASE_SERVICE_ACCOUNT_JSON | Complete Firebase service-account JSON for doctor authentication. |
-| FIREBASE_PROJECT_ID | Matching Firebase project ID, if configured. |
-| VITE_FIREBASE_API_KEY | Firebase web app API key, used when building the doctor portal. |
-| VITE_FIREBASE_AUTH_DOMAIN | Firebase web app auth domain. |
-| VITE_FIREBASE_PROJECT_ID | Firebase web app project ID. |
-| VITE_FIREBASE_APP_ID | Firebase web app ID. |
-| GOOGLE_SHEET_ID | Spreadsheet receiving website enquiries. |
-| GOOGLE_SERVICE_ACCOUNT_JSON | Complete Google service-account JSON for Sheets. |
-| NEON_REALTIME_URL / NEON_REALTIME_SECRET | Optional admin realtime connection. |
+On the SERVER project set:
 
-Never prefix server secrets with VITE_. Firebase web app configuration is intended for the browser. Do not use a local service-account file path in production; supply the JSON variable. Redeploy after changing environment variables. Add your production domain to Firebase Authentication authorized domains and, if using Neon Realtime, its allowed origins.
+~~~env
+DATABASE_URL=your-production-neon-pooled-connection-string
+DATABASE_URL_UNPOOLED=your-production-neon-direct-connection-string
+ADMIN_API_TOKEN=your-private-generated-token
+FRONTEND_ORIGIN=https://getmedconnect.techifylabs.in,https://get-med-connect.vercel.app,https://get-med-connect-3tdz.vercel.app
+FIREBASE_SERVICE_ACCOUNT_JSON=your-complete-firebase-service-account-json
+GOOGLE_SHEET_ID=your-spreadsheet-id
+GOOGLE_SERVICE_ACCOUNT_JSON=your-complete-google-service-account-json
+~~~
 
-Run migrations separately against the production direct connection with npm.cmd run db:migrate. This is not performed automatically during every build.
+Set FIREBASE_PROJECT_ID if used; it must match the service-account project. Supply JSON rather than a path to a local credential file. Keep all server credentials private; never prefix them with VITE_. Optional admin realtime needs NEON_REALTIME_URL and NEON_REALTIME_SECRET on the server, plus the admin production origin allowed by the Neon Realtime configuration. Polling/manual refresh does not require Realtime.
 
-After deployment, verify /api/health returns JSON, /api/doctors returns JSON, and /admin/ and /doctor/ load their own portals. Then verify admin login, doctor login, a profile save, and an enquiry submission. Health alone does not verify database or Sheets connectivity.
+On the DOCTOR frontend additionally set VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID, and VITE_FIREBASE_APP_ID from your Firebase web app. Add get-med-connect-3tdz.vercel.app to Firebase Authentication authorized domains. No admin token or database password belongs in a frontend environment variable.
 
-For local development, npm.cmd run dev:all starts each app on its development port with Vite proxying /api to port 4000. VITE_API_URL is unused.
+Run npm.cmd run db:migrate separately with the production direct connection configured. Local .env files are ignored by Git and are not sent to Vercel. Redeploy the server first, then all three frontends.
 
-The rate limiter uses instance memory; its limit is not shared across instances or restarts.
+Verify https://get-med-connect-gbsu.vercel.app/api/health returns JSON; /api/doctors tests database access. Then test the doctor directory and photos on the client, admin sign-in and updates, doctor sign-in and a profile save, and enquiry submission to Sheets. Opening the server root / may return a JSON 404 because it is an API, not a website.
+
+Local development remains npm.cmd run dev:all, with Vite proxies to port 4000. The rate limiter is per instance and not shared across instances or restarts.

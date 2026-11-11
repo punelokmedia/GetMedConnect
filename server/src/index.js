@@ -1,5 +1,7 @@
 import express from 'express';
-import { app as enquiryApp, configured } from './runtime.js';
+import cors from 'cors';
+import helmet from 'helmet';
+import { app as enquiryApp, configured, frontendOrigins } from './runtime.js';
 import { createAdminRouter } from './admin.js';
 import { createPool, createPostgresStore } from './database.js';
 import { createLiveService } from './realtime.js';
@@ -11,6 +13,10 @@ import { createDoctorAccountService, createDoctorPortalRouter } from './doctor-a
 import { createDoctorProfileStore } from './doctor-profiles.js';
 
 const app = express();
+app.set('trust proxy', process.env.VERCEL ? 1 : false);
+// Handle preflight before every API router, including authenticated routes.
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(cors({ origin: frontendOrigins }));
 const pool = createPool();
 const store = createPostgresStore(pool);
 const accounts = createDoctorAccountStore(pool);

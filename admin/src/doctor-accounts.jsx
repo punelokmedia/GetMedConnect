@@ -1,3 +1,4 @@
+import { apiFetch } from './api.js';
 import React, { useCallback, useEffect, useState } from 'react';
 
 export function DoctorAccounts({ token, doctors }) {
@@ -6,13 +7,13 @@ export function DoctorAccounts({ token, doctors }) {
   const [busy, setBusy] = useState(false);
   const [credentials, setCredentials] = useState(null);
   async function request(path, options = {}) {
-    const response = await fetch(`/api/admin${path}`, { ...options, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, cache: 'no-store' });
+    const response = await apiFetch(`/api/admin${path}`, { ...options, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, cache: 'no-store' });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Account operation failed.');
     return result;
   }
   const load = useCallback(async () => {
-    const response = await fetch('/api/admin/doctor-accounts', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+    const response = await apiFetch('/api/admin/doctor-accounts', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Could not load doctor login accounts.');
     setAccounts(result.accounts);
