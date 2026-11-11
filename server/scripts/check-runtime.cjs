@@ -6,4 +6,4 @@ assert.equal(typeof auth.getAuth, 'function');
 const fromFirebase = createRequire(require.resolve('firebase-admin/auth'));
 const jwks = fromFirebase('jwks-rsa');
 assert.equal(typeof jwks, 'function');
-console.log('Firebase Auth and JWKS load successfully without require(esm).');
+console.log(`Firebase Admin ${require('../package.json').dependencies['firebase-admin']}: Auth and JWKS load successfully without require(esm).`);

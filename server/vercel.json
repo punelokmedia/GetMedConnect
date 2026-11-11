@@ -1,4 +1,5 @@
 {
   "framework": "express",
+  "installCommand": "npm ci",
   "buildCommand": "npm run check:runtime"
 }

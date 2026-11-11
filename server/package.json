@@ -11,11 +11,6 @@
     "test": "node --test",
     "check:runtime": "node --no-experimental-require-module scripts/check-runtime.cjs"
   },
-  "overrides": {
-    "jwks-rsa": {
-      "jose": "5.10.0"
-    }
-  },
   "dependencies": {
     "@neon/realtime": "^0.1.2",
     "@vercel/functions": "^3.10.6",
@@ -23,7 +18,7 @@
     "dotenv": "^17.0.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.0",
-    "firebase-admin": "^14.5.0",
+    "firebase-admin": "13.10.0",
     "googleapis": "^160.0.0",
     "helmet": "^8.0.0",
     "pg": "^8.23.1",
