@@ -33,9 +33,24 @@ test('admin access, doctor assignment, and completed appointment conversions', a
     assert.equal((await request('/appointments', booking)).status, 400);
     assert.equal((await request(`/appointments/${appointment.data.id}`, { outcome: 'Converted' }, 'PATCH')).status, 400);
     assert.equal((await request(`/appointments/${appointment.data.id}`, { status: 'Completed', outcome: 'Converted' }, 'PATCH')).status, 200);
+    const editedLead = await request('/leads/' + lead.data.id, { name: 'Updated Patient', source: 'Referral' }, 'PATCH');
+    assert.equal(editedLead.data.name, 'Updated Patient');
+    assert.equal(editedLead.data.phone, '9876543210');
+    const editedDoctor = await request('/doctors/' + doctor.data.id, { city: 'Mumbai', email: 'updated@example.com' }, 'PATCH');
+    assert.equal(editedDoctor.data.city, 'Mumbai');
+    assert.equal(editedDoctor.data.registrationNumber, 'TEST-123');
+    assert.equal((await request('/leads/' + lead.data.id, { phone: 'invalid' }, 'PATCH')).status, 400);
+    assert.equal((await request('/doctors/' + doctor.data.id, undefined, 'DELETE')).status, 409);
+    assert.equal((await request('/leads/' + lead.data.id, undefined, 'DELETE')).status, 409);
+    assert.equal((await fetch(base + '/doctors/' + doctor.data.id, { method: 'DELETE' })).status, 401);
     const restored = await createAdminStore(join(directory, 'records.json')).read();
     assert.equal(restored.appointments[0].outcome, 'Converted');
     assert.equal((await request('/records', undefined, 'GET')).data.doctors.length, 1);
+    assert.equal((await request('/appointments/' + appointment.data.id, undefined, 'DELETE')).status, 200);
+    assert.equal((await request('/doctors/' + doctor.data.id, undefined, 'DELETE')).status, 200);
+    assert.equal((await request('/leads/' + lead.data.id, undefined, 'DELETE')).status, 200);
+    assert.equal((await request('/leads/' + lead.data.id, undefined, 'DELETE')).status, 404);
+    assert.deepEqual(await createAdminStore(join(directory, 'records.json')).read(), { leads: [], doctors: [], appointments: [] });
   } finally {
     await new Promise(resolve => server.close(resolve));
     await rm(directory, { recursive: true, force: true });

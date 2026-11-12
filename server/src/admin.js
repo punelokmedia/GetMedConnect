@@ -98,6 +98,25 @@ export function createAdminRouter({ store, token, live = null, accountService = 
       } catch (error) { if (error.code) throw error; res.status(error.status || 400).json({ error: error.message }); }
     });
   }
+  for (const collection of ['leads', 'doctors', 'appointments']) {
+    router.delete('/' + collection + '/:id', async (req, res) => {
+      try {
+        await store.update(data => {
+          const index = data[collection].findIndex(row => row.id === req.params.id);
+          if (index < 0) throw Object.assign(new Error('Record not found.'), { status: 404 });
+          const reference = collection === 'doctors' ? 'doctorId' : 'leadId';
+          if (collection !== 'appointments' && data.appointments.some(row => row[reference] === req.params.id)) {
+            throw Object.assign(new Error('Delete linked appointments before deleting this record.'), { status: 409 });
+          }
+          data[collection].splice(index, 1);
+        });
+        res.json({ deleted: true });
+      } catch (error) {
+        if (error.code) throw error;
+        res.status(error.status || 400).json({ error: error.message });
+      }
+    });
+  }
   router.use((_error, _req, res, _next) => res.status(500).json({ error: 'Admin storage is unavailable.' }));
   return router;
 }

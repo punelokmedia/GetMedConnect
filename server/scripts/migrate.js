@@ -15,9 +15,12 @@ try {
   for (const file of files) {
   const name = file.replace(/\.sql$/, '');
   const sql = await readFile(new URL(`../migrations/${file}`, import.meta.url), 'utf8');
-  const checksum = createHash('sha256').update(sql).digest('hex');
+  const normalizedSql = sql.replace(/\r\n/g, '\n');
+  const checksum = createHash('sha256').update(normalizedSql).digest('hex');
+  // Accept historical checksums from either platform without hiding SQL changes.
+  const compatibleChecksums = new Set([checksum, createHash('sha256').update(normalizedSql.replace(/\n/g, '\r\n')).digest('hex')]);
   const existing = await client.query('SELECT checksum FROM gmc.migrations WHERE name = $1', [name]);
-  if (existing.rows.length && existing.rows[0].checksum !== checksum) throw new Error('Applied migration checksum changed. Add a new migration instead.');
+  if (existing.rows.length && !compatibleChecksums.has(existing.rows[0].checksum)) throw new Error('Applied migration checksum changed. Add a new migration instead.');
   if (!existing.rows.length) {
     await client.query(sql);
     await client.query('INSERT INTO gmc.migrations (name, checksum) VALUES ($1, $2)', [name, checksum]);

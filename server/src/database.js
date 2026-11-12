@@ -61,6 +61,15 @@ export function createPostgresStore(pool) {
         const data = await readRecords(client);
         const before = structuredClone(data);
         const value = change(data);
+        // Remove dependent rows first, within the same transaction as the record.
+        for (const collection of ['appointments', 'doctors', 'leads']) {
+          const retained = new Set(data[collection].map(row => row.id));
+          for (const row of before[collection]) {
+            if (retained.has(row.id)) continue;
+            if (collection === 'doctors') await client.query('DELETE FROM gmc.doctor_accounts WHERE doctor_id = $1', [row.id]);
+            await client.query(`DELETE FROM gmc.${collection} WHERE id = $1`, [row.id]);
+          }
+        }
         for (const [collection, keys] of Object.entries(columns)) {
           const previous = new Map(before[collection].map(row => [row.id, JSON.stringify(row)]));
           for (const row of data[collection]) {
