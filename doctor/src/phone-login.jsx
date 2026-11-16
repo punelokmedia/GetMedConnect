@@ -34,8 +34,17 @@ export function PhoneLogin() {
         'auth/operation-not-allowed': 'Phone login is not enabled. Contact your administrator.',
         'auth/unauthorized-domain': 'This website must be authorized in Firebase. Contact your administrator.',
         'auth/invalid-phone-number': 'Enter a valid phone number with country code.',
+        'auth/billing-not-enabled': 'Firebase SMS billing is not enabled. Contact your administrator.',
+        'auth/quota-exceeded': 'The Firebase SMS quota has been reached. Contact your administrator.',
+        'auth/captcha-check-failed': 'The security check failed. Reload the page and try again.',
+        'auth/invalid-app-credential': 'The security check expired or was rejected. Reload the page and try again.',
+        'auth/missing-app-credential': 'The security check could not complete. Reload the page and try again.',
+        'auth/app-not-authorized': 'This app is not authorized for Firebase phone login. Contact your administrator.',
+        'auth/network-request-failed': 'Cannot connect to Firebase. Check your connection and try again.',
       };
-      setError(messages[failure.code] || (failure.code ? 'Phone verification failed. Please try again or contact your administrator.' : failure.message));
+      const code = /^auth\/[a-z0-9-]+$/.test(failure.code || '') ? failure.code : '';
+      const message = messages[code] || (failure.code ? 'Phone verification failed. Please try again or contact your administrator.' : failure.message);
+      setError(`${message}${code ? ` (${code})` : ''}`);
       if (!confirmation) { verifier.current?.clear(); verifier.current = null; }
     } finally { setBusy(false); }
   }

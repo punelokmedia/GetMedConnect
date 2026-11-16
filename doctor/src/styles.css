@@ -507,3 +507,7 @@ button {
 .coordination-notes p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
 @media (max-width: 1000px) { .portal-shell .login-card { display: block; } }
 @media (max-width: 540px) { .patient-details { grid-template-columns: 1fr; } }
+
+.login-methods { display: flex; gap: 12px; margin-bottom: 24px; }
+.login-methods button { flex: 1; }
+.login-methods button[aria-pressed="true"] { background: var(--green-700); color: white; }
