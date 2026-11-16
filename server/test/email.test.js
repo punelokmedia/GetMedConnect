@@ -22,3 +22,8 @@ test('email failures are sanitized and configuration never implies delivery', as
   assert.deepEqual(await failed({ email: 'doctor@example.com', event: 'changed' }), { status: 'failed', reason: 'provider_unavailable' });
   assert.equal((await notifySafely(async () => { throw new Error('secret'); }, {})).status, 'failed');
 });
+
+test('invalid sender configuration is rejected before contacting the provider', async () => {
+  const notify = createDoctorEmailNotifier({ env: { RESEND_API_KEY: 'test', NOTIFICATION_FROM_EMAIL: 'accounts@invalid' }, fetchImpl: () => assert.fail('unexpected request') });
+  assert.deepEqual(await notify({ event: 'changed', email: 'doctor@example.com' }), { status: 'failed', reason: 'invalid_sender' });
+});

@@ -4,6 +4,9 @@ import { z } from 'zod';
 export function createDoctorEmailNotifier({ env = process.env, fetchImpl = fetch } = {}) {
   return async ({ email, temporaryPassword, event }) => {
     if (!env.RESEND_API_KEY || !env.NOTIFICATION_FROM_EMAIL) return { status: 'not_configured' };
+    const sender = env.NOTIFICATION_FROM_EMAIL.trim();
+    const senderAddress = sender.match(/<([^<>]+)>$/)?.[1] || sender;
+    if (!z.email().safeParse(senderAddress).success) return { status: 'failed', reason: 'invalid_sender' };
     if (!z.email().safeParse(email).success) return { status: 'failed', reason: 'invalid_email' };
     const credentials = event === 'created' || event === 'reset';
     const subject = event === 'created' ? 'Your GetMedConnect doctor account' : event === 'reset' ? 'Your GetMedConnect temporary password' : 'Your GetMedConnect password was changed';
@@ -13,7 +16,7 @@ export function createDoctorEmailNotifier({ env = process.env, fetchImpl = fetch
     try {
       const response = await fetchImpl('https://api.resend.com/emails', {
         method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: env.NOTIFICATION_FROM_EMAIL, to: [email], subject, text }),
+        body: JSON.stringify({ from: sender, to: [email], subject, text }),
         signal: AbortSignal.timeout(10000),
       });
       if (!response.ok) return { status: 'failed', reason: 'provider_rejected' };

@@ -115,8 +115,8 @@ export function createDoctorPortalRouter({ accounts, auth, profiles = null, noti
     res.json({ doctor, account: accountView(req.doctorAccount) });
   });
   router.post('/password', async (req, res) => {
-    const parsed = z.object({ password: z.string().min(12).max(128) }).strict().safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: typeof req.body?.password === 'string' && req.body.password.length < 8 ? 'Password must contain at least 8 characters.' : 'Use a password with 12-128 characters.' });
+    const parsed = z.object({ password: z.string().min(8).max(128) }).strict().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: typeof req.body?.password === 'string' && req.body.password.length < 8 ? 'Password must contain at least 8 characters.' : 'Use a password with 8-128 characters.' });
     await accounts.requirePasswordChange(req.doctorAccount.doctorId);
     await auth.updateUser(req.doctorAccount.firebaseUid, { password: parsed.data.password });
     await auth.revokeRefreshTokens(req.doctorAccount.firebaseUid);

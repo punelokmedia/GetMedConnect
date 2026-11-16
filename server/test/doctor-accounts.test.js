@@ -79,7 +79,7 @@ test('admin provisions doctor logins, requires password replacement, enforces ow
     const short = await request('/api/doctor/password', uid, { password: 'short' }, 'POST');
     assert.equal(short.status, 400);
     assert.equal(short.data.error, 'Password must contain at least 8 characters.');
-    assert.equal((await request('/api/doctor/password', uid, { password: '12345678' }, 'POST')).status, 400);
+    assert.equal((await request('/api/doctor/password', uid, { password: '12345678' }, 'POST')).status, 200);
     assert.equal((await request('/api/doctor/password', uid, { password: 'Replacement-password-123!' }, 'POST')).status, 200);
     const own = await request(`/api/doctor/appointments?doctorId=${doctorB.id}`, uid);
     assert.equal(own.data.appointments.length, 1);
