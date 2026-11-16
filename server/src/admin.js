@@ -84,7 +84,7 @@ export function createAdminRouter({ store, token, live = null, accountService = 
           const existing = method === 'patch' ? data[collection].find(row => row.id === req.params.id) : null;
           if (method === 'patch' && !existing) throw Object.assign(new Error('Record not found.'), { status: 404 });
           const record = { ...(existing || { id: randomUUID(), createdAt: new Date().toISOString() }), ...parsed.data, updatedAt: new Date().toISOString() };
-          if (collection === 'doctors' && data.doctors.some(row => row.id !== record.id && row.registrationNumber.toLowerCase() === record.registrationNumber.toLowerCase())) throw new Error('This registration number is already registered.');
+          if (collection === 'doctors' && record.registrationNumber.toLowerCase() !== 'na' && data.doctors.some(row => row.id !== record.id && row.registrationNumber.toLowerCase() === record.registrationNumber.toLowerCase())) throw new Error('This registration number is already registered.');
           if (collection === 'appointments') {
             const doctor = data.doctors.find(row => row.id === record.doctorId);
             if (!doctor || !data.leads.some(row => row.id === record.leadId)) throw new Error('Select an existing lead and doctor.');

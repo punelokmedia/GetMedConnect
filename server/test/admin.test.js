@@ -30,6 +30,13 @@ test('admin access, doctor assignment, and completed appointment conversions', a
     assert.equal(lead.status, 201);
     const doctor = await request('/doctors', { name: 'Test Doctor', email: 'doctor@example.com', phone: '9876543211', specialty: 'Dental', city: 'Pune', registrationNumber: 'TEST-123' });
     assert.equal(doctor.status, 201);
+    const duplicate = await request('/doctors', { ...doctor.data, email: 'different@example.com', phone: '9876543212' });
+    assert.equal(duplicate.status, 400);
+    for (const registrationNumber of ['NA', 'na', ' NA ']) {
+      const unknown = await request('/doctors', { ...doctor.data, registrationNumber });
+      assert.equal(unknown.status, 201);
+      assert.equal((await request('/doctors/' + unknown.data.id, undefined, 'DELETE')).status, 200);
+    }
     const booking = { leadId: lead.data.id, doctorId: doctor.data.id, scheduledAt: '2027-01-15T09:00:00.000Z' };
     assert.equal((await request('/appointments', booking)).status, 400);
     await request(`/doctors/${doctor.data.id}`, { status: 'Active' }, 'PATCH');
