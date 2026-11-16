@@ -35,10 +35,12 @@ test('admin provisions doctor logins, requires password replacement, enforces ow
       return { uid: token, auth_time: Math.floor(Date.now() / 1000) };
     },
   };
+  const emails = [];
+  const notifyEmail = async payload => { emails.push(payload); if (payload.event === 'reset') throw new Error('provider failure'); return { status: 'accepted' }; };
   const app = express();
   app.use(express.json());
-  app.use('/api/admin', createAdminRouter({ store: { read: async () => ({ doctors: [doctorA, doctorB] }) }, token: 'admin-test', accountService: createDoctorAccountService({ accounts, auth }) }));
-  app.use('/api/doctor', createDoctorPortalRouter({ accounts, auth }));
+  app.use('/api/admin', createAdminRouter({ store: { read: async () => ({ doctors: [doctorA, doctorB] }) }, token: 'admin-test', accountService: createDoctorAccountService({ accounts, auth, notifyEmail }) }));
+  app.use('/api/doctor', createDoctorPortalRouter({ accounts, auth, notifyEmail }));
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -53,6 +55,9 @@ test('admin provisions doctor logins, requires password replacement, enforces ow
     const created = await request(route, 'admin-test', {}, 'POST');
     assert.equal(created.status, 201);
     assert.equal(created.data.email, doctorA.email);
+    assert.equal(emails[0].email, doctorA.email);
+    assert.equal(emails[0].temporaryPassword, created.data.temporaryPassword);
+    assert.equal(created.data.emailNotification.status, 'accepted');
     assert.ok(created.data.temporaryPassword.length > 20);
     assert.equal((await request(route, 'admin-test', {}, 'POST')).status, 409);
     assert.equal(JSON.stringify(rows).includes(created.data.temporaryPassword), false);
@@ -62,14 +67,20 @@ test('admin provisions doctor logins, requires password replacement, enforces ow
     assert.equal((await request('/api/doctor/me', 'self-created-account')).status, 403);
     assert.equal((await request('/api/doctor/me', uid)).data.account.mustChangePassword, true);
     assert.equal((await request('/api/doctor/appointments', uid)).data.code, 'PASSWORD_CHANGE_REQUIRED');
-    assert.equal((await request('/api/doctor/password', uid, { password: 'short' }, 'POST')).status, 400);
+    const short = await request('/api/doctor/password', uid, { password: 'short' }, 'POST');
+    assert.equal(short.status, 400);
+    assert.equal(short.data.error, 'Password must contain at least 8 characters.');
+    assert.equal((await request('/api/doctor/password', uid, { password: '12345678' }, 'POST')).status, 400);
     assert.equal((await request('/api/doctor/password', uid, { password: 'Replacement-password-123!' }, 'POST')).status, 200);
     const own = await request(`/api/doctor/appointments?doctorId=${doctorB.id}`, uid);
     assert.equal(own.data.appointments.length, 1);
     assert.equal(own.data.appointments[0].id, appointments[0].id);
     assert.equal((await request(`/api/doctor/appointments/${appointments[1].id}`, uid, { status: 'Completed', outcome: 'Converted' }, 'PATCH')).status, 404);
     assert.equal((await request(`/api/doctor/appointments/${appointments[0].id}`, uid, { status: 'Completed', outcome: 'Converted' }, 'PATCH')).status, 200);
-    assert.equal((await request(`${route}/reset`, 'admin-test', {}, 'POST')).status, 200);
+    const reset = await request(`${route}/reset`, 'admin-test', {}, 'POST');
+    assert.equal(reset.status, 200);
+    assert.equal(reset.data.emailNotification.status, 'failed');
+    assert.equal(emails.at(-1).email, doctorA.email);
     assert.equal((await request('/api/doctor/appointments', uid)).status, 403);
     assert.equal((await request(route, 'admin-test', { enabled: false }, 'PATCH')).status, 200);
     assert.equal((await request('/api/doctor/me', uid)).status, 401);

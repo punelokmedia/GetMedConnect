@@ -10,8 +10,13 @@ test('admin access, doctor assignment, and completed appointment conversions', a
   const directory = await mkdtemp(join(tmpdir(), 'gmc-admin-'));
   const store = createAdminStore(join(directory, 'records.json'));
   const app = express();
+  const notifications = [];
   app.use(express.json());
-  app.use('/api/admin', createAdminRouter({ store, token: 'test-token' }));
+  app.use('/api/admin', createAdminRouter({ store, token: 'test-token', notifyAppointment: async payload => {
+    assert.ok((await store.read()).appointments.some(row => row.id === payload.appointment.id));
+    notifications.push(payload);
+    return { patient: { status: 'accepted' }, doctor: { status: 'failed' } };
+  } }));
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
   const base = `http://127.0.0.1:${server.address().port}/api/admin`;
@@ -30,9 +35,16 @@ test('admin access, doctor assignment, and completed appointment conversions', a
     await request(`/doctors/${doctor.data.id}`, { status: 'Active' }, 'PATCH');
     const appointment = await request('/appointments', booking);
     assert.equal(appointment.status, 201);
+    assert.equal(appointment.data.whatsapp.patient.status, 'accepted');
+    assert.equal(appointment.data.whatsapp.doctor.status, 'failed');
+    assert.equal(notifications[0].patient.phone, '9876543210');
+    assert.equal(notifications[0].doctor.phone, '9876543211');
     assert.equal((await request('/appointments', booking)).status, 400);
     assert.equal((await request(`/appointments/${appointment.data.id}`, { outcome: 'Converted' }, 'PATCH')).status, 400);
     assert.equal((await request(`/appointments/${appointment.data.id}`, { status: 'Completed', outcome: 'Converted' }, 'PATCH')).status, 200);
+    assert.equal(notifications.length, 2);
+    assert.equal(notifications[1].event, 'status');
+    assert.equal(notifications[1].appointment.status, 'Completed');
     const editedLead = await request('/leads/' + lead.data.id, { name: 'Updated Patient', source: 'Referral' }, 'PATCH');
     assert.equal(editedLead.data.name, 'Updated Patient');
     assert.equal(editedLead.data.phone, '9876543210');

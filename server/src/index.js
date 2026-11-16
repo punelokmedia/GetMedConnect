@@ -1,8 +1,11 @@
 import express from 'express';
+import { createDoctorEmailNotifier } from './email.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import { app as enquiryApp, configured, frontendOrigins } from './runtime.js';
 import { createAdminRouter } from './admin.js';
+// WhatsApp messaging to patients and doctors is temporarily disabled.
+// import { createWhatsAppNotifier } from './whatsapp.js';
 import { createPool, createPostgresStore } from './database.js';
 import { createLiveService } from './realtime.js';
 import { createPublicDoctorsRouter } from './public-doctors.js';
@@ -22,14 +25,28 @@ const store = createPostgresStore(pool);
 const accounts = createDoctorAccountStore(pool);
 const auth = getDoctorAuth();
 const profiles = createDoctorProfileStore(pool);
+const notifyEmail = createDoctorEmailNotifier();
+/* Re-enable this block and the router options below to resume WhatsApp messages.
+const notifyAppointment = createWhatsAppNotifier();
+async function notifyDoctorAppointment({ appointment }) {
+  const data = await store.read();
+  appointment = data.appointments.find(row => row.id === appointment.id);
+  if (!appointment) return;
+  return notifyAppointment({ event: 'status', appointment, patient: data.leads.find(row => row.id === appointment.leadId), doctor: data.doctors.find(row => row.id === appointment.doctorId) });
+}
+*/
 app.use('/api/doctors', createPublicDoctorsRouter({ store, profiles }));
-app.use('/api/doctor', express.json({ limit: '400kb' }), createDoctorPortalRouter({ accounts, auth, profiles }));
+app.use('/api/doctor', express.json({ limit: '400kb' }), createDoctorPortalRouter({
+  accounts, auth, profiles, notifyEmail,
+  // notifyAppointment: notifyDoctorAppointment,
+}));
 app.use('/api/admin', express.json({ limit: '400kb' }), createAdminRouter({
   token: process.env.ADMIN_API_TOKEN,
   store,
   profiles,
+  // notifyAppointment,
   live: createLiveService(),
-  accountService: createDoctorAccountService({ accounts, auth }),
+  accountService: createDoctorAccountService({ accounts, auth, notifyEmail }),
 }));
 app.use((error, _req, res, next) => {
   if (error.type === 'entity.too.large') return res.status(413).json({ error: 'Profile is too large. Choose a smaller photo.' });

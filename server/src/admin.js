@@ -37,7 +37,7 @@ export function createAdminStore(path) {
   };
 }
 
-export function createAdminRouter({ store, token, live = null, accountService = null, profiles = null }) {
+export function createAdminRouter({ store, token, live = null, accountService = null, profiles = null, notifyAppointment = null }) {
   const router = express.Router();
   router.use(rateLimit({ windowMs: 60000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false }));
   router.use((req, res, next) => {
@@ -79,6 +79,7 @@ export function createAdminRouter({ store, token, live = null, accountService = 
       const parsed = (method === 'patch' ? schema.partial() : schema).safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: 'Check the record fields.', fields: parsed.error.flatten().fieldErrors });
       try {
+        let notification;
         const record = await store.update(data => {
           const existing = method === 'patch' ? data[collection].find(row => row.id === req.params.id) : null;
           if (method === 'patch' && !existing) throw Object.assign(new Error('Record not found.'), { status: 404 });
@@ -90,11 +91,22 @@ export function createAdminRouter({ store, token, live = null, accountService = 
             if (['Scheduled', 'Confirmed'].includes(record.status) && doctor.status !== 'Active') throw new Error('Appointments require an active doctor.');
             if (record.outcome !== 'Pending' && record.status !== 'Completed') throw new Error('Complete the appointment before recording conversion.');
             if (['Scheduled', 'Confirmed'].includes(record.status) && data.appointments.some(row => row.id !== record.id && row.doctorId === record.doctorId && row.scheduledAt === record.scheduledAt && ['Scheduled', 'Confirmed'].includes(row.status))) throw new Error('The doctor already has an appointment at this time.');
+            if (existing && existing.status !== record.status) {
+              notification = { event: 'status', appointment: { ...record }, patient: { ...data.leads.find(row => row.id === record.leadId) }, doctor: { ...doctor } };
+            }
+            if (['Scheduled', 'Confirmed'].includes(record.status) && (!existing || !['Scheduled', 'Confirmed'].includes(existing.status) || existing.scheduledAt !== record.scheduledAt || existing.doctorId !== record.doctorId || existing.leadId !== record.leadId)) {
+              notification = { appointment: { ...record }, patient: { ...data.leads.find(row => row.id === record.leadId) }, doctor: { ...doctor } };
+            }
           }
           if (existing) Object.assign(existing, record); else data[collection].push(record);
           return record;
         });
-        res.status(method === 'post' ? 201 : 200).json(record);
+        let whatsapp;
+        if (notification && notifyAppointment) {
+          try { whatsapp = await notifyAppointment(notification); }
+          catch { whatsapp = { patient: { status: 'failed' }, doctor: { status: 'failed' } }; }
+        }
+        res.status(method === 'post' ? 201 : 200).json({ ...record, ...(whatsapp ? { whatsapp } : {}) });
       } catch (error) { if (error.code) throw error; res.status(error.status || 400).json({ error: error.message }); }
     });
   }

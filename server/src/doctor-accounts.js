@@ -3,6 +3,8 @@ import rateLimit from 'express-rate-limit';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 
+import { notifySafely } from './email.js';
+
 import { profileSchema, profileFailure } from './doctor-profiles.js';
 
 const accountView = account => ({ doctorId: account.doctorId, loginEmail: account.loginEmail, loginEnabled: account.loginEnabled, mustChangePassword: account.mustChangePassword });
@@ -10,7 +12,7 @@ const fail = (status, message) => Object.assign(new Error(message), { status });
 const temporaryPassword = () => `Gmc!${randomBytes(18).toString('base64url')}`;
 const idSchema = z.uuid();
 
-export function createDoctorAccountService({ accounts, auth }) {
+export function createDoctorAccountService({ accounts, auth, notifyEmail = null }) {
   function ready() { if (!accounts || !auth) throw fail(503, 'Doctor login setup is incomplete. Configure Firebase Admin credentials and apply database migrations.'); }
   async function requireAccount(id) { ready(); const account = await accounts.getByDoctor(id); if (!account) throw fail(404, 'Create a doctor login first.'); return account; }
   return {
@@ -27,7 +29,8 @@ export function createDoctorAccountService({ accounts, auth }) {
       // Fail closed if either activation step fails; admin can reset/enable the linked account.
       await auth.updateUser(user.uid, { disabled: false });
       await accounts.setEnabled(id, true);
-      return { email: doctor.email, temporaryPassword: password };
+      const emailNotification = await notifySafely(notifyEmail, { event: 'created', email: doctor.email, temporaryPassword: password });
+      return { email: doctor.email, temporaryPassword: password, emailNotification };
     },
     async reset(id) {
       const account = await requireAccount(id);
@@ -35,7 +38,8 @@ export function createDoctorAccountService({ accounts, auth }) {
       await accounts.requirePasswordChange(id);
       await auth.updateUser(account.firebaseUid, { password });
       await auth.revokeRefreshTokens(account.firebaseUid);
-      return { email: account.loginEmail, temporaryPassword: password };
+      const emailNotification = await notifySafely(notifyEmail, { event: 'reset', email: account.loginEmail, temporaryPassword: password });
+      return { email: account.loginEmail, temporaryPassword: password, emailNotification };
     },
     async setEnabled(id, enabled) {
       const account = await requireAccount(id);
@@ -71,7 +75,7 @@ export function doctorAccountAdminRouter(service) {
   return router;
 }
 
-export function createDoctorPortalRouter({ accounts, auth, profiles = null }) {
+export function createDoctorPortalRouter({ accounts, auth, profiles = null, notifyEmail = null, notifyAppointment = null }) {
   const router = express.Router();
   router.use(rateLimit({ windowMs: 60000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false }));
   router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
@@ -94,12 +98,13 @@ export function createDoctorPortalRouter({ accounts, auth, profiles = null }) {
   });
   router.post('/password', async (req, res) => {
     const parsed = z.object({ password: z.string().min(12).max(128) }).strict().safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: 'Use a password with 12–128 characters.' });
+    if (!parsed.success) return res.status(400).json({ error: typeof req.body?.password === 'string' && req.body.password.length < 8 ? 'Password must contain at least 8 characters.' : 'Use a password with 12-128 characters.' });
     await accounts.requirePasswordChange(req.doctorAccount.doctorId);
     await auth.updateUser(req.doctorAccount.firebaseUid, { password: parsed.data.password });
     await auth.revokeRefreshTokens(req.doctorAccount.firebaseUid);
     await accounts.passwordChanged(req.doctorAccount.doctorId);
-    res.json({ success: true, signInAgain: true });
+    const emailNotification = await notifySafely(notifyEmail, { event: 'changed', email: req.doctorAccount.loginEmail });
+    res.json({ success: true, signInAgain: true, emailNotification });
   });
   router.use((req, res, next) => {
     if (req.doctorAccount.mustChangePassword) return res.status(403).json({ error: 'Change your temporary password before accessing patients.', code: 'PASSWORD_CHANGE_REQUIRED' });
@@ -119,8 +124,10 @@ export function createDoctorPortalRouter({ accounts, auth, profiles = null }) {
   router.patch('/appointments/:id', async (req, res) => {
     const parsed = z.object({ status: z.enum(['Scheduled', 'Confirmed', 'Completed', 'Cancelled', 'No-show']), outcome: z.enum(['Pending', 'Converted', 'Not converted']) }).strict().safeParse(req.body);
     if (!idSchema.safeParse(req.params.id).success || !parsed.success || (parsed.data.outcome !== 'Pending' && parsed.data.status !== 'Completed')) return res.status(400).json({ error: 'Check appointment status and conversion.' });
+    const previous = (await accounts.appointments(req.doctorAccount.doctorId)).find(row => row.id === req.params.id);
     const updated = await accounts.updateAppointment(req.doctorAccount.doctorId, req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ error: 'Appointment not found.' });
+    if (previous && previous.status !== updated.status) await notifySafely(notifyAppointment, { appointment: updated, event: 'status' });
     res.json(updated);
   });
   router.use(accountError);
