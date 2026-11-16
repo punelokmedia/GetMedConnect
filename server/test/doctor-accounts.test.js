@@ -6,12 +6,13 @@ import { createAdminRouter } from '../src/admin.js';
 import { createDoctorAccountService, createDoctorPortalRouter } from '../src/doctor-accounts.js';
 
 test('admin provisions doctor logins, requires password replacement, enforces ownership, and revokes disabled access', async () => {
-  const doctorA = { id: randomUUID(), name: 'Doctor A', email: 'a@example.invalid' };
+  const doctorA = { id: randomUUID(), name: 'Doctor A', email: 'a@example.invalid', phone: '9876543210' };
   const doctorB = { id: randomUUID(), name: 'Doctor B', email: 'b@example.invalid' };
   const rows = [];
   const appointments = [{ id: randomUUID(), doctorId: doctorA.id, status: 'Scheduled', outcome: 'Pending' }, { id: randomUUID(), doctorId: doctorB.id, status: 'Scheduled', outcome: 'Pending' }];
   const users = new Map();
   let revocations = 0;
+  let phoneIdentity = null;
   const accounts = {
     list: async () => rows,
     doctor: async id => [doctorA, doctorB].find(row => row.id === id),
@@ -32,7 +33,7 @@ test('admin provisions doctor logins, requires password replacement, enforces ow
     verifyIdToken: async (token, checkRevoked) => {
       assert.equal(checkRevoked, true);
       if (!users.has(token) || users.get(token).disabled) throw new Error('Unauthorized');
-      return { uid: token, auth_time: Math.floor(Date.now() / 1000) };
+      return { ...(phoneIdentity || {}), uid: token, auth_time: Math.floor(Date.now() / 1000) };
     },
   };
   const emails = [];
@@ -62,6 +63,14 @@ test('admin provisions doctor logins, requires password replacement, enforces ow
     assert.equal((await request(route, 'admin-test', {}, 'POST')).status, 409);
     assert.equal(JSON.stringify(rows).includes(created.data.temporaryPassword), false);
     const uid = `gmc-doctor-${doctorA.id}`;
+    assert.equal(users.get(uid).phoneNumber, '+919876543210');
+    assert.equal((await request(`${route}/phone`, 'wrong', {}, 'POST')).status, 401);
+    assert.equal((await request(`${route}/phone`, 'admin-test', {}, 'POST')).status, 200);
+    phoneIdentity = { firebase: { sign_in_provider: 'phone' }, phone_number: '+919876543211' };
+    assert.equal((await request('/api/doctor/me', uid)).status, 403);
+    phoneIdentity.phone_number = '+919876543210';
+    assert.equal((await request('/api/doctor/me', uid)).status, 200);
+    phoneIdentity = null;
     assert.equal((await request('/api/doctor/me', 'unregistered-user')).status, 401);
     users.set('self-created-account', {});
     assert.equal((await request('/api/doctor/me', 'self-created-account')).status, 403);

@@ -4,7 +4,7 @@ export function createDoctorAccountStore(pool) {
     async list() { return (await pool.query(`SELECT ${accountColumns} FROM gmc.doctor_accounts ORDER BY created_at`)).rows; },
     async getByDoctor(id) { return (await pool.query(`SELECT ${accountColumns} FROM gmc.doctor_accounts WHERE doctor_id = $1`, [id])).rows[0]; },
     async getByUid(uid) { return (await pool.query(`SELECT ${accountColumns} FROM gmc.doctor_accounts WHERE firebase_uid = $1`, [uid])).rows[0]; },
-    async doctor(id) { return (await pool.query('SELECT id, name, email, specialty, city FROM gmc.doctors WHERE id = $1', [id])).rows[0]; },
+    async doctor(id) { return (await pool.query('SELECT id, name, email, phone, specialty, city FROM gmc.doctors WHERE id = $1', [id])).rows[0]; },
     async create({ doctorId, firebaseUid, loginEmail }) {
       await pool.query('INSERT INTO gmc.doctor_accounts (doctor_id, firebase_uid, login_email) VALUES ($1,$2,$3)', [doctorId, firebaseUid, loginEmail]);
     },

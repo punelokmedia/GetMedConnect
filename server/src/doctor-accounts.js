@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 
+import { normalizeWhatsAppPhone } from './whatsapp.js';
 import { notifySafely } from './email.js';
 
 import { profileSchema, profileFailure } from './doctor-profiles.js';
@@ -23,7 +24,7 @@ export function createDoctorAccountService({ accounts, auth, notifyEmail = null 
       if (!doctor) throw fail(404, 'Doctor not found.');
       if (await accounts.getByDoctor(id)) throw fail(409, 'This doctor already has a login. Use Reset password.');
       const password = temporaryPassword();
-      const user = await auth.createUser({ uid: `gmc-doctor-${id}`, email: doctor.email, displayName: doctor.name, password, disabled: true });
+      const user = await auth.createUser({ uid: `gmc-doctor-${id}`, email: doctor.email, displayName: doctor.name, password, ...(doctor.phone ? { phoneNumber: `+${normalizeWhatsAppPhone(doctor.phone)}` } : {}), disabled: true });
       try { await accounts.create({ doctorId: id, firebaseUid: user.uid, loginEmail: doctor.email.toLowerCase() }); }
       catch (error) { await auth.deleteUser(user.uid).catch(() => {}); throw error; }
       // Fail closed if either activation step fails; admin can reset/enable the linked account.
@@ -41,6 +42,16 @@ export function createDoctorAccountService({ accounts, auth, notifyEmail = null 
       const emailNotification = await notifySafely(notifyEmail, { event: 'reset', email: account.loginEmail, temporaryPassword: password });
       return { email: account.loginEmail, temporaryPassword: password, emailNotification };
     },
+    async linkPhone(id) {
+      const account = await requireAccount(id);
+      const doctor = await accounts.doctor(id);
+      let phoneNumber;
+      try { phoneNumber = `+${normalizeWhatsAppPhone(doctor?.phone)}`; }
+      catch { throw fail(400, 'Enter a valid registered doctor phone number with country code first.'); }
+      await auth.updateUser(account.firebaseUid, { phoneNumber });
+      await auth.revokeRefreshTokens(account.firebaseUid);
+      return { success: true };
+    },
     async setEnabled(id, enabled) {
       const account = await requireAccount(id);
       if (!enabled) await accounts.setEnabled(id, false);
@@ -53,7 +64,7 @@ export function createDoctorAccountService({ accounts, auth, notifyEmail = null 
 }
 
 function accountError(error, _req, res, _next) {
-  const messages = { 'auth/email-already-exists': 'That email already has a Firebase account. Use a different doctor email or contact the administrator.', 'auth/uid-already-exists': 'A Firebase account already exists for this doctor. Contact the administrator to reconcile it.', 'auth/insufficient-permission': 'Firebase service account needs permission to manage Authentication users.' };
+  const messages = { 'auth/email-already-exists': 'That email already has a Firebase account. Use a different doctor email or contact the administrator.', 'auth/uid-already-exists': 'A Firebase account already exists for this doctor. Contact the administrator to reconcile it.', 'auth/phone-number-already-exists': 'That phone number is already linked to another Firebase account. Use a unique doctor phone number.', 'auth/invalid-phone-number': 'Enter a valid doctor phone number with country code.', 'auth/insufficient-permission': 'Firebase service account needs permission to manage Authentication users.' };
   const message = error.status ? error.message : messages[error.code] || 'Doctor account operation failed. Please retry or check the server configuration.';
   res.status(error.status || (error.code === '23505' ? 409 : 503)).json({ error: message });
 }
@@ -66,6 +77,7 @@ export function doctorAccountAdminRouter(service) {
   router.use('/doctors/:doctorId/account', (req, res, next) => { if (!idSchema.safeParse(req.params.doctorId).success) return res.status(400).json({ error: 'Invalid doctor ID.' }); next(); });
   router.post('/doctors/:id/account', async (req, res) => res.status(201).json(await service.create(req.params.id)));
   router.post('/doctors/:id/account/reset', async (req, res) => res.json(await service.reset(req.params.id)));
+  router.post('/doctors/:id/account/phone', async (req, res) => res.json(await service.linkPhone(req.params.id)));
   router.patch('/doctors/:id/account', async (req, res) => {
     const parsed = z.object({ enabled: z.boolean() }).strict().safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: 'Provide an enabled value.' });
@@ -88,6 +100,12 @@ export function createDoctorPortalRouter({ accounts, auth, profiles = null, noti
     catch { return res.status(401).json({ error: 'Your session expired or access was disabled. Sign in again.' }); }
     const account = await accounts.getByUid(identity.uid);
     if (!account?.loginEnabled) return res.status(403).json({ error: 'No enabled doctor account is linked to this login. Contact your administrator.' });
+    if (identity.firebase?.sign_in_provider === 'phone') {
+      const doctor = await accounts.doctor(account.doctorId);
+      let registeredPhone;
+      try { registeredPhone = `+${normalizeWhatsAppPhone(doctor?.phone)}`; } catch { /* Deny invalid or missing registered numbers. */ }
+      if (!registeredPhone || registeredPhone !== identity.phone_number) return res.status(403).json({ error: 'Your phone login is not linked to your registered doctor number. Contact your administrator.' });
+    }
     if (!identity.auth_time || identity.auth_time * 1000 < new Date(account.credentialsIssuedAt).getTime()) return res.status(401).json({ error: 'Your credentials changed. Wait a moment and sign in again.' });
     req.doctorAccount = account;
     next();
