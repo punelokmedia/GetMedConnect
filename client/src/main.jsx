@@ -28,11 +28,34 @@ const faqs = [
 function App() {
  const [type,setType]=useState('patient'); const [specialty,setSpecialty]=useState(specialties[0]); const [city,setCity]=useState('');
  const [pin,setPin]=useState(''); const [status,setStatus]=useState(''); const [busy,setBusy]=useState(false); const [menu,setMenu]=useState(false);
+ const [consultationDoctor,setConsultationDoctor]=useState('');
  const dialog=useRef(null); const opener=useRef(null);
  function openEnquiry(nextType=type,nextSpecialty=specialty) {opener.current=document.activeElement;if(/^\d{6}$/.test(city.trim())){setPin(city.trim());setCity('');}setType(nextType);setSpecialty(nextSpecialty);setStatus('');document.body.style.overflow='hidden';dialog.current.showModal();}
- useEffect(()=>{const el=dialog.current; const unlock=()=>{document.body.style.overflow='';opener.current?.focus();}; el.addEventListener('close',unlock);return()=>el.removeEventListener('close',unlock);},[]);
+ useEffect(() => {
+  const el = dialog.current;
+  function unlock() {
+   document.body.style.overflow = '';
+   setConsultationDoctor('');
+   setSpecialty(current => specialties.includes(current) ? current : specialties[0]);
+   opener.current?.focus();
+  }
+  el.addEventListener('close', unlock);
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('enquiry') === '1') {
+   setConsultationDoctor((url.searchParams.get('doctor') || '').trim().slice(0, 120));
+   setCity((url.searchParams.get('city') || '').trim().slice(0, 80));
+   const requestedSpecialty = (url.searchParams.get('specialty') || '').trim().slice(0, 100);
+   if (requestedSpecialty.length >= 2) setSpecialty(requestedSpecialty);
+   for (const key of ['enquiry', 'doctor', 'city', 'specialty']) url.searchParams.delete(key);
+   window.history.replaceState(window.history.state, '', url);
+   document.body.style.overflow = 'hidden';
+   el.showModal();
+  }
+  return () => el.removeEventListener('close', unlock);
+ }, []);
  async function submit(event) {
   event.preventDefault();if(busy)return;const form=event.currentTarget;const data=Object.fromEntries(new FormData(form));data.consent=data.consent==='on';setBusy(true);setStatus('');
+  if(type==='patient' && consultationDoctor) data.requirement = [`Consultation requested with ${consultationDoctor}.`, data.requirement.trim()].filter(Boolean).join('\n').slice(0, 1000);
   try {const response=await apiFetch(`/api/enquiries/${type}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(!response.ok)throw new Error(result.error||'Please try again later.');setStatus(`Enquiry received. Reference: ${result.id}. This does not confirm an appointment.`);form.reset();}
   catch(error){setStatus(error instanceof TypeError?'Cannot reach the server. Please try again later.':error.message);}finally{setBusy(false);}
  }
@@ -121,7 +144,8 @@ function App() {
         {type==='clinic' && <label>Clinic name<input name="clinicName" required minLength={2} maxLength={120}/></label>}
         <label>{type==='clinic'?'Contact person':'Your name'}<input name="name" autoComplete="name" required minLength={2} maxLength={100}/></label>
         <div className="fields"><label>Mobile number<input name="phone" type="tel" autoComplete="tel" pattern="[6-9][0-9]{9}" title="Enter a 10-digit Indian mobile number starting with 6–9" required/></label><label>Email (optional)<input name="email" type="email" autoComplete="email" maxLength={254}/></label></div>
-        <label>Specialty<select name="specialty" value={specialty} onChange={e=>setSpecialty(e.target.value)}>{specialties.map(s=><option key={s}>{s}</option>)}</select></label>
+        {type==='patient' && consultationDoctor && <p>Consultation with <strong>{consultationDoctor}</strong>. Our team will follow up about availability.</p>}
+        <label>Specialty<select name="specialty" value={specialty} onChange={e=>setSpecialty(e.target.value)}>{!specialties.includes(specialty) && <option>{specialty}</option>}{specialties.map(s=><option key={s}>{s}</option>)}</select></label>
         <div className="fields"><label>City<input name="city" value={city} onChange={e=>setCity(e.target.value)} required minLength={2} maxLength={80}/></label>{type==='patient'&&<label>PIN code (optional)<input name="pin" defaultValue={pin} inputMode="numeric" pattern="[0-9]{6}" title="Enter a 6-digit PIN code"/></label>}</div>
         <label>{type==='clinic'?'Partnership interest':'Brief requirement (optional)'}<textarea name="requirement" rows={3} maxLength={1000}/></label>
         <div className="honeypot" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
