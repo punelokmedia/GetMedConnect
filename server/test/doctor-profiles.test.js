@@ -26,7 +26,7 @@ test('doctor saves only own profile; admin shares it; public projection excludes
   const account = { doctorId: id, loginEmail: 'login@example.com', loginEnabled: true, credentialsIssuedAt: new Date(0) };
   const accounts = { getByUid: async uid => uid === 'doctor' ? { ...account, mustChangePassword } : null };
   const auth = { verifyIdToken: async token => { if (token !== 'doctor') throw Error(); return { uid: token, auth_time: Date.now() / 1000 }; } };
-  const store = { read: async () => ({ doctors: [...records.values()].map(row => ({ ...row, profile: row })) }) };
+  const store = { read: async () => ({ doctors: [...records.values()].map(row => ({ ...row, registrationNumber: row.registration, profile: row })) }) };
   const app = express(); app.use(express.json());
   app.use('/api/doctor', createDoctorPortalRouter({ accounts, auth, profiles }));
   app.use('/api/admin', createAdminRouter({ token: 'admin', store, profiles }));
@@ -50,7 +50,16 @@ test('doctor saves only own profile; admin shares it; public projection excludes
     const visible = (await request(`/api/doctors/${id}`)).data.doctor;
     assert.equal(visible.bio, 'Updated by admin');
     assert.equal(visible.clinic, 'Test Clinic');
-    for (const key of ['email', 'phone', 'age', 'gender', 'registration', 'council', 'status', 'photo']) assert.equal(visible[key], undefined);
+    assert.equal(visible.gender, 'Female');
+    assert.equal(visible.age, 38);
+    assert.equal(visible.registration, 'TEST-123');
+    assert.equal(visible.council, 'State Council');
+    const listed = (await request('/api/doctors')).data.doctors[0];
+    for (const key of ['email', 'phone', 'loginEmail', 'status', 'photo']) {
+      assert.equal(visible[key], undefined);
+      assert.equal(listed[key], undefined);
+    }
+    for (const key of ['age', 'gender', 'registration', 'council']) assert.equal(listed[key], undefined);
     assert.equal((await request(`/api/doctors/${other}`)).status, 404);
     const photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFuoAAAAASUVORK5CYII=';
     assert.equal((await request('/api/doctor/profile', 'doctor', { ...values, photo }, 'PUT')).status, 200);

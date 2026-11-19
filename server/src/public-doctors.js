@@ -2,13 +2,20 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 
-export const publicProfile = row => {
+export const publicProfile = (row, includeDetails = false) => {
   const { id, name, specialty, city } = row;
   const result = { id, name, specialty, city };
   for (const key of ['qualification', 'experience', 'clinic', 'address', 'pincode', 'bio', 'modes', 'services']) {
     if (row.profile?.[key] !== undefined) result[key] = row.profile[key];
   }
   if (row.photoUrl) result.photoUrl = row.photoUrl;
+  if (includeDetails) {
+    const { gender, age, council } = row.profile ?? {};
+    if (gender && gender !== 'Prefer not to say') result.gender = gender;
+    if (Number.isInteger(age)) result.age = age;
+    if (council) result.council = council;
+    if (row.registrationNumber) result.registration = row.registrationNumber;
+  }
   return result;
 };
 const searchSchema = z.object({ q: z.string().trim().max(120).default(''), city: z.string().trim().max(120).default(''), specialty: z.string().trim().max(120).default(''), page: z.coerce.number().int().min(1).max(10000).default(1) });
@@ -23,11 +30,11 @@ export function createPublicDoctorsRouter({ store, profiles = null }) {
     const { q, city, specialty, page } = parsed.data;
     if (store.findPublicDoctors) {
       const rows = await store.findPublicDoctors(parsed.data);
-      return res.json({ doctors: rows.slice(0, 12).map(publicProfile), page, hasNext: rows.length > 12 });
+      return res.json({ doctors: rows.slice(0, 12).map(row => publicProfile(row)), page, hasNext: rows.length > 12 });
     }
     const includes = (value, search) => value.toLowerCase().includes(search.toLowerCase());
     const rows = (await store.read()).doctors.filter(row => row.status === 'Active' && includes(`${row.name} ${row.specialty} ${row.city}`, q) && includes(row.city, city) && includes(row.specialty, specialty)).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
-    res.json({ doctors: rows.slice((page - 1) * 12, page * 12).map(publicProfile), page, hasNext: rows.length > page * 12 });
+    res.json({ doctors: rows.slice((page - 1) * 12, page * 12).map(row => publicProfile(row)), page, hasNext: rows.length > page * 12 });
   });
   router.get('/:id/photo', async (req, res) => {
     if (!profiles || !z.uuid().safeParse(req.params.id).success) return res.status(404).end();
@@ -42,7 +49,7 @@ export function createPublicDoctorsRouter({ store, profiles = null }) {
     if (!z.uuid().safeParse(req.params.id).success) return res.status(404).json({ error: 'Doctor profile not found.' });
     const doctor = store.getPublicDoctor ? await store.getPublicDoctor(req.params.id) : (await store.read()).doctors.find(row => row.id === req.params.id && row.status === 'Active');
     if (!doctor) return res.status(404).json({ error: 'Doctor profile not found.' });
-    res.json({ doctor: publicProfile(doctor) });
+    res.json({ doctor: publicProfile(doctor, true) });
   });
   router.use((_error, _req, res, _next) => res.status(503).json({ error: 'The doctor directory is temporarily unavailable. Please try again.' }));
   return router;

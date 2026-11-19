@@ -27,7 +27,8 @@ test('public directory exposes only active profiles, supports search and paginat
     assert.equal((await fetch(`${base}/invalid`)).status, 404);
     assert.equal((await fetch(`${base}/${pending.id}`)).status, 404);
     const visible = await (await fetch(`${base}/${doctors[0].id}`)).json();
-    assert.deepEqual(Object.keys(visible.doctor).sort(), ['city', 'id', 'name', 'specialty']);
+    assert.deepEqual(Object.keys(visible.doctor).sort(), ['city', 'id', 'name', 'registration', 'specialty']);
+    assert.equal(visible.doctor.registration, doctors[0].registrationNumber);
     doctors[0].status = 'Inactive';
     assert.equal((await fetch(`${base}/${doctors[0].id}`)).status, 404);
   } finally { await new Promise(resolve => server.close(resolve)); }

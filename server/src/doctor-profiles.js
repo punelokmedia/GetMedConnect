@@ -21,7 +21,7 @@ export const profileSchema = z.object({
 }).strict();
 
 export const profileColumns = `id, name, email, phone, specialty, city, registration_number AS "registrationNumber", status, profile, updated_at AS "updatedAt"`;
-export const publicColumns = `id, name, specialty, city, profile, CASE WHEN photo <> '' THEN '/api/doctors/' || id || '/photo?v=' || extract(epoch FROM updated_at)::text ELSE '' END AS "photoUrl"`;
+export const publicColumns = `id, name, specialty, city, registration_number AS "registrationNumber", profile, CASE WHEN photo <> '' THEN '/api/doctors/' || id || '/photo?v=' || extract(epoch FROM updated_at)::text ELSE '' END AS "photoUrl"`;
 export function fullProfile(row) { return row ? { ...row.profile, ...row, profile: undefined, registration: row.registrationNumber } : null; }
 
 export function createDoctorProfileStore(pool) {
