@@ -1,7 +1,7 @@
 .doctor-site {
   --directory-green: #003b30;
   --directory-dark: #013228;
-  --directory-orange: #ffa000;
+  --directory-orange: #FAA805;
   min-height: 100vh;
   background: #fdfdfd;
   color: var(--directory-dark);
@@ -24,7 +24,7 @@
   border-bottom: 1px solid #edf0f1;
 }
 .directory-nav nav { display: flex; align-items: center; gap: clamp(16px, 2.5vw, 36px); color: #20252b; }
-.directory-nav nav [aria-current] { text-decoration: underline 2px #efa300; text-underline-offset: 6px; }
+.directory-nav nav [aria-current] { text-decoration: underline 2px var(--directory-orange); text-underline-offset: 6px; }
 .directory-nav nav a:hover, .directory-footer a:hover { text-decoration: underline; }
 .directory-nav .directory-mobile-enquiry { display: none; }
 
@@ -52,9 +52,10 @@
   overflow: hidden;
   min-height: 523px;
   background:
-    url('/doctors/wave-left.svg') left bottom / 425px auto no-repeat,
+    url('/doctors/wave-left.svg') left bottom / 369px auto no-repeat,
+    url('/doctors/wave-right-light.svg') right 16px top 155px / 423px auto no-repeat,
     url('/doctors/wave-right.svg') right 95px / 256px auto no-repeat,
-    linear-gradient(100deg, #e9990b 23%, #928c56 52%, #003b30 92%);
+    linear-gradient(100deg, var(--directory-orange) 23%, #928c56 52%, #003b30 92%);
 }
 .directory-hero-content { position: relative; z-index: 1; padding: 34px 4px 42px; }
 .directory-breadcrumb { display: flex; align-items: center; gap: 14px; color: #fff; margin-bottom: 54px; font-size: 15px; }
@@ -145,7 +146,7 @@
 .doctor-facts svg { align-self: start; flex-shrink: 0; color: #495a70; }
 .doctor-card-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-top: 1px solid #fff9; padding-top: 15px; margin-top: auto; }
 .doctor-profile-link, .doctor-book { font-size: 12px; font-weight: 700; }
-.doctor-profile-link { color: #8a4800; }
+.doctor-profile-link { color: var(--directory-orange); }
 .doctor-profile-link:hover { text-decoration: underline; }
 .doctor-profile-link span { margin-left: 5px; }
 .doctor-book { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 12px; background: #dce3df; color: #094d3f; }
@@ -213,7 +214,11 @@
 
 @media (max-width: 560px) {
   .directory-container, .directory-nav, .directory-results { width: calc(100% - 32px); }
-  .directory-hero { min-height: 0; background-position: left bottom, right bottom, center; }
+  .directory-hero {
+    min-height: 0;
+    background-position: left bottom, right bottom, right bottom, center;
+    background-size: 235px auto, 230px auto, 140px auto, auto;
+  }
   .directory-hero-content { padding: 20px 4px 1px; }
   .directory-hero-profile .directory-hero-content { padding-bottom: 24px; }
   .directory-breadcrumb { margin-bottom: 22px; }
