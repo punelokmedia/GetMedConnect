@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 
 import './style.css';
 import './patient.css';
-import { DoctorsPage } from './doctors.jsx';
+import { DoctorsPage, SiteHeader } from './doctors.jsx';
 
 const specialties = ['Fertility', 'Hair Care', 'Skin & Dermatology', 'Women’s Health', 'Dental Care', 'Diagnostics'];
 const icons = { person:'person', clinic:'apartment', search:'search', book:'import_contacts', link:'link_2', shield:'verified_user', people:'groups', heart:'favorite', growth:'monitoring', settings:'settings', list:'event_note', location:'location_on', mail:'mail' };
@@ -17,6 +17,50 @@ function SpecialtyIcon({index}) {
  return <svg className="specialty-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 29h9v8a8 8 0 0 0 16 0v-8h9"/><path d="M36 5C25 12 20 23 20 35c0 6 8 7 8 1-3-10 0-21 8-31Z"/><g fill="currentColor" stroke="none"><circle cx="14" cy="10" r="1.4"/><circle cx="12" cy="18" r="1.4"/><circle cx="38" cy="17" r="1.8"/><circle cx="36" cy="43" r="1.3"/></g></svg>;
 }
 function Brand() { return <a className="patient-brand" href="#home"><img src="/patient/logo.svg" alt="GetMedConnect home" width="260" height="55"/></a>; }
+const clinicLogos = [
+ ['renaissance', 'Renaissance Derma Clinic'],
+ ['sharvari', 'Sharvari Polyclinic'],
+ ['vanesh', 'Vanesh Fertility & IVF Centre'],
+ ['fabulous', 'FabUllous Clinic'],
+ ['dr-enhance', 'Dr. Enhance Wellness'],
+ ['embryonics', 'Embryonics Fertility & IVF Centre'],
+ ['sudamangalam', 'Sudamangalam Ayurved & Panchakarma Chikitsalay'],
+ ['elite', 'Elite'],
+ ['ayurveda', 'Ayurveda clinics'],
+ ['sunshine', 'Dr. Kanade Sunshine Hospital']
+];
+
+function ClinicLogoSection() {
+ const [paused, setPaused] = useState(false);
+ return (
+  <section className="container patient-clinic-logos" aria-labelledby="clinic-logos-title">
+   <div className="clinic-logos-heading">
+    <div>
+     <p className="eyebrow">Our clinics</p>
+     <h2 id="clinic-logos-title">Trusted Clinics on <em>GetMedConnect</em></h2>
+     <p className="clinic-logos-description">A growing network of verified and quality healthcare clinics, committed to providing safe, reliable and patient-first care.</p>
+    </div>
+    <button type="button" className="clinic-logos-toggle" aria-controls="clinic-logo-track"
+     onClick={() => setPaused(current => !current)}>
+     {paused ? 'Play logos' : 'Pause logos'}
+    </button>
+   </div>
+   <div className="clinic-logos-window">
+    <div id="clinic-logo-track" className="clinic-logo-track" data-paused={paused}>
+     {[false, true].map(copy => (
+      <ul key={String(copy)} className="clinic-logo-set" aria-hidden={copy || undefined}>
+       {clinicLogos.map(([file, name]) => (
+        <li key={file}>
+         <img src={`/patient/clinic-logos/${file}.svg`} alt={copy ? '' : name} width="326" height="188" fetchPriority="low"/>
+        </li>
+       ))}
+      </ul>
+     ))}
+    </div>
+   </div>
+  </section>
+ );
+}
 const faqs = [
  ['How does GetMedConnect work?', 'Choose a specialty, share your location and send an enquiry. Our team follows up to help you explore suitable healthcare options.'],
  ['Which cities and specialties are available?', 'Explore the specialties listed above and include your city or PIN code. Our team will confirm whether suitable options are available in your location.'],
@@ -27,7 +71,7 @@ const faqs = [
 ];
 function App() {
  const [type,setType]=useState('patient'); const [specialty,setSpecialty]=useState(specialties[0]); const [city,setCity]=useState('');
- const [pin,setPin]=useState(''); const [status,setStatus]=useState(''); const [busy,setBusy]=useState(false); const [menu,setMenu]=useState(false);
+ const [pin,setPin]=useState(''); const [status,setStatus]=useState(''); const [busy,setBusy]=useState(false);
  const [consultationDoctor,setConsultationDoctor]=useState('');
  const dialog=useRef(null); const opener=useRef(null);
  function openEnquiry(nextType=type,nextSpecialty=specialty) {opener.current=document.activeElement;if(/^\d{6}$/.test(city.trim())){setPin(city.trim());setCity('');}setType(nextType);setSpecialty(nextSpecialty);setStatus('');document.body.style.overflow='hidden';dialog.current.showModal();}
@@ -61,7 +105,7 @@ function App() {
  }
  const features=[['book','Clear Guidance','Simple information to help you make informed choices.'],['link','Relevant Connections','We help you explore clinics that match your needs and location.'],['person','Personalised Support','A smoother, more convenient way to find healthcare options.'],['shield','Privacy & Consent','Your information is shared with relevant clinics, with your consent.']];
  return <div className="patient-page">
- <header id="home" className="header"><div className="nav-wrap"><Brand/><button className="menu-toggle" aria-expanded={menu} aria-controls="navigation" onClick={()=>setMenu(!menu)} aria-label="Toggle navigation">☰</button><nav id="navigation" className={menu?'is-open':''} aria-label="Main navigation" onClick={()=>setMenu(false)}><a className="active" href="#home">Home</a><a href="#specialties">Find Healthcare</a><a href="/doctors">Our Doctors</a><a href="#how-it-works">How It Works</a><a href="#clinics">For Clinics</a><a href="#about">About Us</a><a href="#faqs">FAQs</a><button className="button" onClick={()=>openEnquiry('patient')}>Enquire Now <span>→</span></button></nav></div></header>
+ <SiteHeader current="/" onEnquire={() => openEnquiry('patient')}/>
  <main>
  <section className="patient-hero" aria-labelledby="hero-title">
   <div className="container patient-hero-content">
@@ -129,6 +173,7 @@ function App() {
   <img src="/patient/family.svg" alt="A healthcare worker with a smiling older couple" loading="lazy" width="536" height="340"/>
   <div><p className="eyebrow">Designed around you</p><h2>A <em>better healthcare experience</em> for you and your family.</h2><p>From finding the right care to connecting with trusted clinics, we’re here to make the journey simpler and clearer.</p></div>
  </section>
+ <ClinicLogoSection/>
  <section id="clinics" className="container patient-partners">
   <span className="icon-circle"><Icon name="link"/></span>
   <div><p className="eyebrow">For healthcare providers</p><h2>Partner with GetMedConnect.</h2><p>Connect with relevant patient enquiries and grow your practice.</p></div>
@@ -139,7 +184,7 @@ function App() {
   <div className="faq-grid">{faqs.map(([q,a])=><details key={q}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div>
  </section>
  </main>
- <footer><div className="container footer-grid"><div className="footer-brand"><Brand/><p>Connecting people with the right healthcare options, for a healthier tomorrow.</p></div><div><h3>Quick Links</h3>{[['Home','home'],['Find Healthcare','specialties'],['How It Works','how-it-works'],['For Clinics','clinics'],['About Us','about'],['FAQs','faqs']].map(([title,id])=><a key={id} href={`#${id}`}>{title}</a>)}</div><div><h3>Popular Specialties</h3>{specialties.map(s=><button className="footer-link" key={s} onClick={()=>openEnquiry('patient',s)}>{s}</button>)}</div><div><h3>Contact Us</h3><button className="footer-contact" onClick={()=>openEnquiry('patient')}><Icon name="mail"/>Get in touch</button><button className="footer-contact" onClick={()=>openEnquiry('patient')}><Icon name="mail"/>Send us a message</button><p className="footer-contact"><Icon name="location"/>Serving enquiries across India</p></div></div><div className="container footer-bottom"><span>CONNECT · CARE · CHOOSE</span><span>© {new Date().getFullYear()} GetMedConnect. All rights reserved.</span></div></footer>
+ <footer><div className="container footer-grid"><div className="footer-brand"><Brand/><p>Connecting people with the right healthcare options, for a healthier tomorrow.</p></div><div><h3>Quick Links</h3>{[['Home','home'],['Find Healthcare','specialties'],['For Clinics','clinics'],['FAQs','faqs']].map(([title,id])=><a key={id} href={`#${id}`}>{title}</a>)}</div><div><h3>Popular Specialties</h3>{specialties.map(s=><button className="footer-link" key={s} onClick={()=>openEnquiry('patient',s)}>{s}</button>)}</div><div><h3>Contact Us</h3><button className="footer-contact" onClick={()=>openEnquiry('patient')}><Icon name="mail"/>Get in touch</button><button className="footer-contact" onClick={()=>openEnquiry('patient')}><Icon name="mail"/>Send us a message</button><p className="footer-contact"><Icon name="location"/>Serving enquiries across India</p></div></div><div className="container footer-bottom"><span>CONNECT · CARE · CHOOSE</span><span>© {new Date().getFullYear()} GetMedConnect. All rights reserved.</span></div></footer>
  <dialog ref={dialog} className="enquiry-dialog" aria-labelledby="enquiry-title" onClick={e=>{if(e.target===e.currentTarget&&!busy)dialog.current.close();}} onCancel={e=>{if(busy)e.preventDefault();}}><div className="dialog-content"><button className="dialog-close" aria-label="Close enquiry form" disabled={busy} onClick={()=>dialog.current.close()}>×</button><p className="eyebrow">LET’S FIND YOUR NEXT STEP</p><h2 id="enquiry-title">{type==='clinic'?'Partner with us.':'Tell us what you need.'}</h2><p>Share your contact details so our team can follow up. Please avoid medical records or sensitive health details.</p><div className="tabs"><button type="button" disabled={busy} aria-pressed={type==='patient'} onClick={()=>{setType('patient');setStatus('');}}>Find Healthcare</button><button type="button" disabled={busy} aria-pressed={type==='clinic'} onClick={()=>{setType('clinic');setStatus('');}}>For Clinics</button></div><form onSubmit={submit} key={type}>
         {type==='clinic' && <label>Clinic name<input name="clinicName" required minLength={2} maxLength={120}/></label>}
         <label>{type==='clinic'?'Contact person':'Your name'}<input name="name" autoComplete="name" required minLength={2} maxLength={100}/></label>

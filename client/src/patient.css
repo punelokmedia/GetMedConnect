@@ -58,6 +58,74 @@
   color: white;
 }
 .patient-page .patient-specialties .eyebrow, .patient-page .patient-partners .eyebrow { color: #ffb61a; }
+.patient-clinic-logos {
+  --logo-gap: 16px;
+  --logo-width: clamp(232px, 30vw, 326px);
+  max-width: 1200px;
+  padding-block: clamp(30px, 4.7vw, 56px);
+  padding-bottom: clamp(18px, 3.7vw, 44px);
+  border-radius: 16px;
+  background: #003c2f;
+  color: white;
+}
+.clinic-logos-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-inline: clamp(18px, 2vw, 25px);
+  margin-bottom: clamp(24px, 3vw, 36px);
+}
+.patient-page main .patient-clinic-logos .eyebrow { color: #ffb61a; margin: 0 0 9px; }
+.patient-page main .patient-clinic-logos h2 { font-size: clamp(26px, 3vw, 36px); font-weight: 500; }
+.clinic-logos-description { max-width: 470px; margin: 14px 0 0; color: #ffffffb0; }
+.clinic-logos-toggle {
+  padding: 8px 12px;
+  border: 1px solid #ffffff70;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+}
+.clinic-logos-toggle:focus-visible { outline: 2px solid #ffb61a; outline-offset: 3px; }
+.clinic-logos-window { overflow: hidden; }
+.clinic-logo-track {
+  display: flex;
+  width: max-content;
+  animation: roll-clinic-logos 64s linear -20.6s infinite;
+}
+.clinic-logo-track[data-paused=true] { animation-play-state: paused; }
+@media (hover: hover) {
+  .clinic-logos-window:hover .clinic-logo-track { animation-play-state: paused; }
+}
+.clinic-logo-set {
+  display: flex;
+  flex: none;
+  gap: var(--logo-gap);
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--logo-gap) 12px 0;
+}
+.clinic-logo-set li {
+  flex: 0 0 var(--logo-width);
+  width: var(--logo-width);
+  aspect-ratio: 326 / 188;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 6px 10px #00171170;
+}
+.clinic-logo-set img { display: block; width: 100%; height: 100%; }
+@keyframes roll-clinic-logos {
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clinic-logos-toggle, .clinic-logo-set[aria-hidden=true] { display: none; }
+  .clinic-logos-window { overflow-x: auto; }
+  .clinic-logo-track { animation: none; }
+  .clinic-logo-set { padding-inline: clamp(18px, 2vw, 25px); }
+}
 .patient-specialty {
   position: relative;
   isolation: isolate;

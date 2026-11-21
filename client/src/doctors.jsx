@@ -24,17 +24,24 @@ function enquiryLink(doctor) {
   return '/?' + query;
 }
 
-function DirectoryHeader() {
+export function SiteHeader({ current = '/doctors', onEnquire }) {
   const [open, setOpen] = useState(false);
-  return <header className="directory-header">
+  function enquiryButton(className) {
+    const label = <>Enquire Now <span aria-hidden="true">→</span></>;
+    return onEnquire
+      ? <button type="button" className={`directory-action ${className}`} onClick={onEnquire}>{label}</button>
+      : <a className={`directory-action ${className}`} href={enquiryLink()}>{label}</a>;
+  }
+
+  return <header id="home" className="directory-header">
     <div className="directory-nav">
       <a href="/"><img src="/patient/logo.svg" width="260" height="55" alt="GetMedConnect home"/></a>
       <button className="menu-toggle" aria-expanded={open} aria-controls="directory-nav-links" aria-label="Toggle navigation" onClick={() => setOpen(!open)}>☰</button>
       <nav id="directory-nav-links" className={open ? 'is-open' : ''} aria-label="Main navigation">
-        {navLinks.map(([label, href]) => <a key={href} href={href} aria-current={href === '/doctors' ? 'page' : undefined}>{label}</a>)}
-        <a className="directory-action directory-mobile-enquiry" href={enquiryLink()}>Enquire Now <span aria-hidden="true">→</span></a>
+        {navLinks.map(([label, href]) => <a key={href} href={href} aria-current={href === current ? 'page' : undefined} onClick={() => setOpen(false)}>{label}</a>)}
+        {enquiryButton('directory-mobile-enquiry')}
       </nav>
-      <a className="directory-action directory-desktop-enquiry" href={enquiryLink()}>Enquire Now <span aria-hidden="true">→</span></a>
+      {enquiryButton('directory-desktop-enquiry')}
     </div>
   </header>;
 }
@@ -47,7 +54,7 @@ function DirectoryFooter() {
           <a className="directory-footer-brand" href="/"><img src="/patient/logo.svg" alt="GetMedConnect home" width="249" height="56"/></a>
           <p>Connecting people with the right healthcare options, for a healthier tomorrow.</p>
         </div>
-        <div><h3>Quick Links</h3>{navLinks.map(([label, href]) => <a href={href} key={href}>{label}</a>)}<a href="/#how-it-works">How It Works</a><a href="/#about">About Us</a></div>
+        <div><h3>Quick Links</h3>{navLinks.map(([label, href]) => <a href={href} key={href}>{label}</a>)}</div>
         <div><h3>Healthcare Specialties</h3>{specials.map(specialty => <a href={'/doctors?' + new URLSearchParams({ specialty })} key={specialty}>{specialty}</a>)}</div>
         <div><h3>Support</h3><a href={enquiryLink()}>Contact Us</a></div>
       </div>
@@ -329,7 +336,7 @@ export function DoctorsPage() {
   const enquiry = enquiryLink();
 
   if (profileId) return <div className="doctor-site">
-    <DirectoryHeader/>
+    <SiteHeader/>
     <PublicDoctorProfile doctor={result?.doctor} loading={loading} error={error} onRetry={refresh}/>
     <DirectoryFooter/>
   </div>;
@@ -352,7 +359,7 @@ export function DoctorsPage() {
   }
 
   return <div className="doctor-site">
-    <DirectoryHeader/>
+    <SiteHeader/>
     <main>
       <section className="directory-hero">
         <div className="directory-container directory-hero-content">

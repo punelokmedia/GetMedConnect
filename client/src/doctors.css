@@ -12,7 +12,14 @@
   margin-inline: auto;
 }
 
-.directory-header { position: relative; z-index: 3; background: #fff; padding-bottom: 10px; }
+.directory-header {
+  --directory-dark: #013228;
+  --directory-orange: #FAA805;
+  position: relative;
+  z-index: 3;
+  background: #fff;
+  padding-bottom: 10px;
+}
 .directory-nav {
   width: min(1280px, calc(100% - 48px));
   min-height: 91px;
