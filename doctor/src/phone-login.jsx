@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { RecaptchaVerifier, setPersistence, browserSessionPersistence, signInWithPhoneNumber } from 'firebase/auth';
 import { auth } from './firebase';
 
-export function PhoneLogin() {
+export function PhoneLogin({ configured }) {
   const container = useRef(null);
   const verifier = useRef(null);
   const [confirmation, setConfirmation] = useState(null);
@@ -10,7 +10,9 @@ export function PhoneLogin() {
   const [error, setError] = useState('');
   useEffect(() => () => { verifier.current?.clear(); verifier.current = null; }, []);
   async function submit(event) {
-    event.preventDefault(); setError(''); setBusy(true);
+    event.preventDefault();
+    if (!configured || busy) return;
+    setError(''); setBusy(true);
     const fields = new FormData(event.currentTarget);
     try {
       if (confirmation) {
@@ -48,5 +50,5 @@ export function PhoneLogin() {
       if (!confirmation) { verifier.current?.clear(); verifier.current = null; }
     } finally { setBusy(false); }
   }
-  return <section><h3>Sign in with phone</h3><p>Use the phone number linked to your doctor login by your administrator.</p>{error && <p role="alert" className="notice notice-error">{error}</p>}<form className="login-form" onSubmit={submit}>{confirmation ? <><p role="status">A verification code was sent to your phone.</p><label className="field"><span>SMS verification code</span><input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required/></label></> : <><label className="field"><span>Registered phone number</span><input name="phone" type="tel" autoComplete="tel" placeholder="+91 9876543210" required/></label><p>By requesting a code, you agree to receive a verification SMS. Google processes your phone number for spam and abuse prevention. SMS charges may apply.</p></>}<div ref={container}/><button className="primary-button" disabled={busy}>{busy ? 'Please wait…' : confirmation ? 'Verify and sign in' : 'Send verification code'}</button>{confirmation && <button className="text-button" type="button" disabled={busy} onClick={() => { setConfirmation(null); setError(''); verifier.current?.clear(); verifier.current = null; }}>Use another number or request a new code</button>}</form></section>;
+  return <section><h3>Sign in with phone</h3><p>Use the phone number linked to your doctor login by your administrator.</p>{error && <p role="alert" className="notice notice-error">{error}</p>}<form className="login-form" onSubmit={submit}>{confirmation ? <><p role="status">A verification code was sent to your phone.</p><label className="field"><span>SMS verification code</span><input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required/></label></> : <><label className="field"><span>Registered phone number</span><input name="phone" type="tel" autoComplete="tel" placeholder="+91 9876543210" required/></label><p>By requesting a code, you agree to receive a verification SMS. Google processes your phone number for spam and abuse prevention. SMS charges may apply.</p></>}<div ref={container}/><button className="primary-button" disabled={busy || !configured}>{busy ? 'Please wait…' : confirmation ? 'Verify and sign in' : 'Send verification code'}</button>{confirmation && <button className="text-button" type="button" disabled={busy} onClick={() => { setConfirmation(null); setError(''); verifier.current?.clear(); verifier.current = null; }}>Use another number or request a new code</button>}</form></section>;
 }

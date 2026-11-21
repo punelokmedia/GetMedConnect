@@ -1,46 +1,132 @@
-.mint-workspace { --mint: #007b65; --ink: #0b1a22; --soft: #e4f7f1; width: 100%; min-height: 100vh; display: grid; grid-template-columns: 250px minmax(0, 1fr); background: #fcfefd; color: var(--ink); font-family: 'DM Sans', Arial, sans-serif; }
-body:has(.mint-workspace) { background: #fcfefd; }
-#root:has(.mint-workspace) { padding: 0; display: block; }
+body:has(.mint-workspace) { background: #fdfdfd; }
+#root:has(.mint-workspace) { display: block; padding: 0; }
+.mint-workspace {
+  --mint: #013228;
+  --ink: #344054;
+  --cream-card: #fff2e2;
+  --blue-card: #e8f2f5;
+  min-height: 100vh;
+  background: #fdfdfd;
+  color: var(--mint);
+  font-family: 'DM Sans', Arial, sans-serif;
+}
+.mint-workspace button { font-family: inherit; cursor: pointer; }
 .mint-workspace svg { width: 24px; height: 24px; flex-shrink: 0; }
-.mint-sidebar { padding: 32px 22px; background: linear-gradient(150deg, #f2fbf8, #e7f6f2 65%, #d8f1eb); display: flex; flex-direction: column; position: relative; border-right: 1px solid #e6f2ee; }
-.mint-logo { width: 150px; height: 120px; object-fit: contain; margin: 0 auto 10px; mix-blend-mode: multiply; }
-.mint-eyebrow { text-transform: uppercase; letter-spacing: 4px; font-size: 10px; font-weight: 800; color: #0b5144; margin: 0 0 18px; }
-.mint-sidebar > .mint-eyebrow { text-align: center; letter-spacing: 3px; }
-.mint-sidebar h1 { color: #084c40; font-size: 30px; line-height: 1.13; letter-spacing: -1.2px; margin: 16px 12px 22px; }
-.mint-intro { font-size: 14px; color: #49616c; line-height: 1.65; margin: 0 12px 32px; }
-.mint-sidebar nav { border-top: 1px solid #d7eae4; padding-top: 22px; display: grid; gap: 12px; }
-.mint-sidebar nav button { display: flex; align-items: center; gap: 16px; text-align: left; padding: 13px 14px; border: 0; border-radius: 10px; color: var(--ink); background: transparent; font-size: 14px; }
-.mint-sidebar nav button svg { color: #00644f; }
-.mint-sidebar nav button.active { background: linear-gradient(110deg, #cdeee5, #bde6dc); color: #004c3c; font-weight: 700; }
-.mint-sidebar nav button:hover { background: #d7f0e8; }
-.mint-sidebar-foot { margin: auto 14px 0; padding-top: 70px; font-size: 12px; color: #0b6653; font-weight: 700; line-height: 1.8; }
-.mint-sidebar-foot span { color: #607f78; font-weight: 400; }
-.mint-main { min-width: 0; padding: 65px 32px 100px; position: relative; isolation: isolate; background: radial-gradient(ellipse at top right, #e1f6ef 0, transparent 35%), #fcfefd; }
-.mint-main::after { content: ''; position: absolute; z-index: -1; bottom: 0; right: 0; width: 100%; height: 120px; background: #dff6ef; clip-path: polygon(0 75%, 18% 54%, 45% 100%, 72% 70%, 100% 0, 100% 100%, 0 100%); }
-.mint-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 42px; }
-.mint-header h2 { font-size: clamp(24px, 2.5vw, 36px); margin: 0 0 12px; letter-spacing: -1px; }
-.welcome-wave { font-size: .85em; }
-.mint-header p { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; }
-.mint-header p svg { width: 20px; height: 20px; }
-.mint-button { display: flex; justify-content: center; align-items: center; gap: 16px; border: 1px solid #a9ded1; border-radius: 15px; background: linear-gradient(110deg, #fff, #f1f9f6); min-height: 54px; padding: 12px 24px; color: #005b47; font-size: 17px; font-weight: 700; box-shadow: 0 5px 10px #0d675408; }
-.mint-button:disabled { opacity: .6; cursor: wait; }
-.mint-button:hover { background: #e1f5ed; }
-.mint-refresh { border-radius: 32px; flex-shrink: 0; }
-.mint-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(310px, 1fr); gap: 26px; align-items: start; }
+.mint-shell {
+  width: min(1280px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 80px clamp(0px, 2.78vw, 40px) 84px 0;
+  display: grid;
+  grid-template-columns: minmax(215px, 287px) minmax(0, 1fr);
+  gap: clamp(24px, 2.85vw, 41px);
+}
+.mint-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 1061px;
+  padding: 38px 24px 32px;
+  border-radius: 24px;
+  background: var(--mint);
+  box-shadow: 0 6px 12px #0006;
+}
+.mint-brand { margin: 0 -24px 39px; padding: 12px 16px; border-radius: 22px 22px 0 0; background: white; min-height: 86px; display: grid; place-items: center; }
+.mint-brand img { display: block; width: 100%; max-width: 255px; }
+.mint-eyebrow { text-transform: uppercase; letter-spacing: .06em; font-size: 12px; font-weight: 800; margin: 0 12px 12px; color: #ffbd00; }
+.mint-sidebar nav { display: grid; gap: 6px; }
+.mint-sidebar nav button, .mint-help { display: flex; align-items: center; gap: 14px; padding: 10px 16px; min-height: 44px; border: 0; border-radius: 16px; background: transparent; color: #fff; text-align: left; font-size: 15px; }
+.mint-sidebar nav button svg, .mint-sidebar nav button img, .mint-help svg { width: 20px; height: 20px; }
+.mint-sidebar nav button.active { color: var(--mint); font-weight: 700; background: #fff; }
+.mint-sidebar nav button:not(.active):hover, .mint-help:hover { background: #ffffff1c; }
+.mint-help { margin: auto auto 0; color: #ffbd00; }
+.mint-main { min-width: 0; padding-top: 41px; }
+.mint-main:focus { outline: none; }
+.mint-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 35px; margin-bottom: 32px; border-bottom: 1px solid #444; }
+.mint-header p { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--ink); font-size: 13px; }
+.mint-header .mint-greeting { font-size: 14px; font-weight: 600; }
+.mint-header p svg { width: 16px; height: 16px; }
+.mint-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 3px 0 9px; }
+.mint-title h1 { margin: 0; font-size: clamp(24px, 2.2vw, 30px); letter-spacing: -.8px; line-height: 1.14; overflow-wrap: anywhere; }
+.mint-toolbar, .mint-account { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.mint-toolbar { flex-shrink: 0; }
+.mint-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 19px; min-height: 43px; border: 1px solid #bcbebf; border-radius: 24px; background: white; color: var(--mint); font-size: 14px; font-weight: 600; }
+.mint-button svg { width: 17px; height: 17px; }
+.mint-button:hover { background: #edf6f3; }
+.mint-button:disabled { opacity: .6; cursor: default; }
+.mint-button.solid { color: #fff; background: var(--mint); }
+.mint-bell { position: relative; width: 44px; padding: 0; }
+.mint-bell svg { width: 20px; height: 20px; }
+.mint-bell span { position: absolute; top: 7px; right: 9px; width: 8px; height: 8px; border-radius: 50%; background: #faa805; }
+.mint-layout { display: grid; grid-template-columns: minmax(0, 2.12fr) minmax(240px, 1fr); align-items: start; gap: 32px; }
 .mint-care { min-width: 0; }
-.mint-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0 0 42px; }
-.mint-stat { display: flex; gap: 18px; padding: 26px 20px; border-radius: 15px; background: linear-gradient(130deg, #edfcf7, #daf5ed); }
-.mint-stat > svg { width: 35px; height: 35px; color: var(--mint); margin-top: 3px; }
-.mint-stat.clock { background: linear-gradient(130deg, #fffdf5, #fff4d2); }
-.mint-stat.clock > svg { color: #f4b000; }
-.mint-stat strong { display: block; font-size: 39px; line-height: 1; margin-bottom: 10px; color: #063c32; }
-.mint-stat span { display: block; font-size: 14px; line-height: 1.4; }
-.mint-section-heading h3 { display: flex; align-items: center; gap: 16px; margin: 0 0 10px; font-size: 25px; letter-spacing: -.6px; }
-.mint-section-heading h3 svg { color: #00644e; width: 30px; height: 30px; }
-.mint-section-heading p { color: #4b5e70; font-size: 14px; line-height: 1.6; margin: 0 0 22px; }
+.mint-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 32px; }
+.mint-stat { display: flex; align-items: flex-start; gap: clamp(9px, 1.5vw, 23px); min-height: 144px; padding: 17px clamp(12px, 1.85vw, 27px); border: 1px solid #e4ece7; border-radius: 24px; background: var(--cream-card); }
+.mint-stat.clock { background: var(--blue-card); }
+.mint-stat.clock svg { color: #ee9700; }
+.mint-stat > svg { margin-top: 10px; width: 28px; height: 28px; }
+.mint-stat strong { display: block; margin-bottom: 4px; font-size: 33px; line-height: 1.15; }
+.mint-stat span { display: block; font-size: 12px; line-height: 1.25; font-weight: 700; }
+.mint-panel { padding: 28px; border: 1px solid #4a4a4a; border-radius: 24px; background: #fdfdfd; }
+.mint-section-heading > div, .mint-quick h2, .mint-section-heading h2 { display: flex; align-items: center; gap: 12px; }
+.mint-section-heading > div { justify-content: space-between; }
+.mint-section-heading h2, .mint-quick h2 { margin: 0; font-size: 18px; letter-spacing: -.35px; }
+.mint-section-heading p { margin: 14px 0 20px; color: var(--ink); font-size: 12px; line-height: 1.4; }
+.mint-text-button { display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 0; background: transparent; color: inherit; white-space: nowrap; font-size: 14px; font-weight: 700; }
+.mint-text-button:hover { text-decoration: underline; }
+.mint-text-button svg { width: 16px; height: 16px; }
+.mint-empty { min-height: 266px; display: grid; place-content: center; justify-items: center; padding: 22px; text-align: center; border: 1px solid #e0ebe8; border-radius: 16px; background: var(--blue-card); }
+.mint-empty h3 { margin: 19px 0 5px; font-size: 16px; letter-spacing: -.25px; }
+.mint-empty p { margin: 0; color: #52677b; font-size: 12px; }
+.mint-quick { margin-top: 32px; border-color: #4a6d64; }
+.mint-quick h2 { margin: 6px 16px 25px; font-size: 16px; gap: 9px; }
+.mint-quick h2 img { width: 20px; height: 20px; }
+.mint-quick > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.mint-quick button { display: grid; grid-template-columns: 1fr auto; align-content: space-between; align-items: end; gap: 12px 6px; padding: 18px 16px; min-height: 128px; border: 1px solid #e5ebe3; border-radius: 16px; background: var(--cream-card); color: var(--mint); text-align: left; font-size: 12px; font-weight: 700; }
+.mint-quick button:nth-child(2) { background: var(--blue-card); }
+.mint-quick button:hover { border-color: var(--mint); }
+.mint-quick button > :first-child { grid-column: 1 / -1; width: 24px; height: 24px; }
+.mint-quick button > :last-child { width: 16px; height: 16px; }
+.mint-quick button span { max-width: 88px; }
+.mint-profile { position: relative; min-height: 458px; padding: 47px 24px 28px; color: #fff; background: var(--mint); border: 1px solid #e4ece7; border-radius: 24px; }
+.mint-edit { position: absolute; top: 23px; right: 24px; display: grid; place-items: center; padding: 0; min-height: 20px; border: 0; background: transparent; }
+.mint-profile > header { display: flex; align-items: flex-start; gap: 12px; }
+.mint-profile h2 { margin: 0 0 3px; font-size: 16px; }
+.mint-profile header p, .mint-profile-info p { margin: 0; font-size: 10px; line-height: 1.25; color: #b8ccc7; }
+.mint-profile-person { display: flex; align-items: center; gap: 6px; min-height: 128px; padding: 15px 12px 15px 16px; margin: 20px 0; color: var(--mint); background: #fff; border-radius: 16px; }
+.mint-profile-person > div { min-width: 0; }
+.mint-profile-person h3 { margin: 0 0 8px; font-size: 16px; line-height: 1.15; overflow-wrap: anywhere; }
+.mint-portrait { display: grid; place-items: center; flex-shrink: 0; width: 64px; height: 64px; border-radius: 16px; overflow: hidden; color: #fff; background: var(--mint); }
+.mint-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.mint-portrait svg { width: 31px; height: 31px; }
+.mint-specialty { display: inline-block; max-width: 100%; border: 1px solid #cdebdc; border-radius: 24px; padding: 3px 11px; background: #e3f4ed; font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
+.mint-profile-person .mint-specialty { padding: 2px 10px; font-size: 10px; }
+.mint-profile-person p { display: flex; align-items: flex-start; gap: 6px; margin: 6px 0 0; color: #46566d; font-size: 12px; overflow-wrap: anywhere; }
+.mint-profile-person p svg { width: 13px; height: 13px; }
+.mint-profile-person a { color: inherit; min-width: 0; }
+.mint-profile-info { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #d5e6e1; padding-top: 26px; }
+.mint-profile-info > div { min-width: 0; padding-right: 10px; }
+.mint-profile-info > div + div { padding: 0 0 0 11px; border-left: 1px solid #d5e6e1; }
+.mint-profile-info h3 { display: flex; align-items: center; gap: 6px; min-height: 20px; margin: 0 0 6px; color: #ffb917; font-size: 10px; }
+.mint-profile-info strong { display: inline-block; border-radius: 20px; padding: 3px 8px; margin-bottom: 4px; color: var(--mint); background: #fff; font-size: 10px; line-height: 1; }
+.mint-profile-info p { max-width: 90px; }
+.mint-footer { background: var(--mint); color: white; }
+.mint-footer-inner { width: min(1198px, calc(100% - 64px)); margin: 0 auto; padding: 45px 0 32px; }
+.mint-footer-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr .59fr; gap: 32px; min-height: 200px; }
+.mint-footer-grid img { max-width: 100%; height: auto; }
+.mint-footer-grid p { max-width: 250px; margin: 23px 0 0; font-size: 12px; color: #d0dfdc; line-height: 1.65; }
+.mint-footer h2 { margin: 2px 0 15px; font-size: 14px; }
+.mint-footer a, .mint-footer button { display: flex; align-items: center; gap: 8px; width: fit-content; margin-bottom: 9px; color: #fff; font-size: 12px; font-weight: 400; text-decoration: none; }
+.mint-footer a:hover, .mint-footer button:hover { text-decoration: underline; }
+.mint-footer button svg { color: #ffb917; }
+.mint-copyright { margin: 30px 0 0; padding-top: 24px; border-top: 1px solid #ffffff22; font-size: 12px; color: #a2c5bb; }
+.mint-dialog { max-width: min(440px, calc(100% - 32px)); padding: 24px; border: 1px solid #d5e6e1; border-radius: 20px; color: var(--mint); }
+.mint-dialog::backdrop { background: #001c17a0; }
+.mint-dialog h2 { margin: 0; font-size: 20px; }
+.mint-dialog p { color: var(--ink); line-height: 1.5; }
+.mint-main > .mint-account { margin-top: 24px; }
+.mint-workspace :is(button, select, a):focus-visible { outline: 3px solid #e7a624; outline-offset: 3px; }
+
 .mint-appointments { display: grid; gap: 20px; }
-.mint-appointment, .mint-profile { background: #fff; border: 1px solid #e0ece8; border-radius: 22px; box-shadow: 0 10px 22px #0c685811; }
-.mint-appointment { padding: 23px 18px 20px; }
+.mint-appointment { padding: 16px; border: 1px solid #e0ece8; border-radius: 16px; background: white; }
 .mint-patient-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin: 0 6px 26px; }
 .mint-patient-heading .mint-eyebrow { color: #24434c; margin-bottom: 12px; }
 .mint-patient-heading h4 { display: flex; gap: 12px; align-items: center; font-size: 23px; margin: 0; overflow-wrap: anywhere; }
@@ -51,14 +137,14 @@ body:has(.mint-workspace) { background: #fcfefd; }
 .mint-status svg { width: 16px; height: 16px; }
 .mint-status.completed { color: #075d31; background: #e1f8df; }
 .mint-status.cancelled, .mint-status.no-show { color: #963e32; background: #fcece7; }
-.mint-appointment-body { display: grid; grid-template-columns: minmax(0, 1fr) 155px; gap: 18px; margin: 0 6px 24px; }
+.mint-appointment-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin: 0 6px 24px; }
 .mint-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 14px; margin: 0; }
 .mint-details > div { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .mint-details svg { width: 21px; height: 21px; color: var(--mint); }
 .mint-details dt { font-size: 11px; color: #526175; margin: 0 0 5px; }
 .mint-details dd { font-size: 13px; margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
 .mint-details a { color: var(--mint); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; }
-.mint-controls { border-left: 1px solid #e5efeb; padding-left: 16px; display: grid; gap: 15px; }
+.mint-controls { border-top: 1px solid #e5efeb; padding: 12px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .mint-controls label { display: grid; gap: 7px; font-size: 11px; color: #405269; }
 .mint-controls select { width: 100%; min-height: 36px; border: 1px solid #cedddc; border-radius: 9px; padding: 7px; background: #fff; font: inherit; font-size: 12px; color: #11252a; }
 .mint-controls select:disabled { opacity: .6; }
@@ -66,36 +152,52 @@ body:has(.mint-workspace) { background: #fcfefd; }
 .mint-notes > svg { color: var(--mint); margin-top: 3px; }
 .mint-notes h5 { margin: 0 0 7px; color: #005640; font-size: 14px; }
 .mint-notes p { margin: 0; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
-.mint-footnote { font-size: 12px; color: #46596e; line-height: 1.7; margin: 12px 5px; }
-.mint-profile { padding: 20px; }
-.mint-profile > header { display: flex; gap: 12px; align-items: flex-start; border-bottom: 1px solid #e2eee9; padding-bottom: 20px; }
-.mint-profile h3 { margin: 2px 0 9px; font-size: 23px; }
-.mint-profile header p { font-size: 12px; color: #526175; margin: 0; line-height: 1.6; }
-.mint-profile-person { display: flex; align-items: center; gap: 20px; padding: 28px 0; border-bottom: 1px solid #dbece6; }
-.mint-avatar.portrait { width: 100px; height: 100px; font-size: 30px; font-weight: 700; background: linear-gradient(145deg, #e4f9f1, #b5e3d8); border: 4px solid #fff; outline: 1px solid #b6e0d5; }
-.mint-profile-person > div { min-width: 0; }
-.mint-profile-person h4 { font-size: 22px; margin: 0 0 10px; overflow-wrap: anywhere; }
-.mint-specialty { display: inline-block; border-radius: 25px; color: #005b45; font-size: 12px; font-weight: 700; background: #d9f6ea; padding: 8px 16px; }
-.mint-profile-person p { display: flex; gap: 12px; align-items: center; font-size: 13px; line-height: 1.5; margin: 14px 0 0; overflow-wrap: anywhere; }
-.mint-profile-person p svg { color: var(--mint); width: 20px; height: 20px; }
-.mint-profile-person a { overflow-wrap: anywhere; min-width: 0; }
-.mint-profile-info { display: grid; grid-template-columns: 1fr 1fr; padding: 26px 0; gap: 18px; }
-.mint-profile-info > div + div { border-left: 1px solid #d8e9e3; padding-left: 18px; }
-.mint-profile-info svg { color: var(--mint); width: 20px; height: 20px; margin-bottom: 8px; }
-.mint-profile-info h5 { margin: 0 0 10px; font-size: 12px; }
-.mint-profile-info p { margin: 0; font-size: 12px; line-height: 1.7; color: #50616b; }
-.mint-profile-help { display: flex; gap: 12px; align-items: center; background: #f0faf6; border: 1px solid #b9e1d5; padding: 12px; border-radius: 12px; color: #08604a; }
-.mint-profile-help p { margin: 0; font-size: 12px; line-height: 1.6; }
-.mint-actions { display: flex; gap: 22px; margin-top: 30px; max-width: 770px; }
-.mint-actions button { flex: 1; }
-.mint-button.solid { color: white; border-color: #00634f; background: linear-gradient(120deg, #00866e, #005b47); }
-.mint-button.solid:hover { background: #006550; }
-.mint-empty { text-align: center; padding: 40px 20px; border: 1px dashed #bbdcd0; background: #f2faf7; border-radius: 20px; color: #45665c; }
-.mint-empty h4 { margin: 15px 0 8px; }
-.mint-empty p { font-size: 13px; margin: 0; }
-.mint-layout.profile-view { grid-template-columns: minmax(0, 720px); }
-.mint-workspace button:focus-visible, .mint-workspace select:focus-visible, .mint-workspace a:focus-visible { outline: 3px solid #e7b624; outline-offset: 3px; }
-@media (min-width: 1600px) { .mint-main { padding: 70px 48px 110px; } .mint-layout { gap: 32px; } .mint-stat { padding: 30px 24px; } }
-@media (max-width: 1250px) { .mint-workspace { grid-template-columns: 215px minmax(0, 1fr); } .mint-sidebar { padding: 28px 15px; } .mint-sidebar h1 { font-size: 27px; } .mint-main { padding: 40px 24px 90px; } .mint-layout { grid-template-columns: minmax(0, 1fr); } .mint-profile { max-width: none; } .mint-stat { padding: 22px; } .mint-profile-person { justify-content: flex-start; } }
-@media (max-width: 760px) { .mint-workspace { display: block; } .mint-sidebar { padding: 14px 18px; border-bottom: 1px solid #d9ece5; } .mint-logo { width: 70px; height: 58px; margin: 0; } .mint-sidebar > .mint-eyebrow { position: absolute; left: 104px; top: 38px; margin: 0; letter-spacing: 2px; } .mint-sidebar h1, .mint-intro, .mint-sidebar-foot { display: none; } .mint-sidebar nav { display: flex; gap: 6px; overflow-x: auto; padding-top: 12px; margin-top: 8px; } .mint-sidebar nav button { white-space: nowrap; padding: 10px; gap: 8px; font-size: 12px; } .mint-sidebar nav svg { width: 18px; height: 18px; } .mint-main { padding: 28px 18px 70px; } .mint-header { align-items: flex-start; gap: 12px; margin-bottom: 28px; } .mint-header h2 { font-size: 25px; } .mint-header p { font-size: 13px; } .mint-refresh { font-size: 0; gap: 0; padding: 10px 15px; min-height: 45px; } .mint-refresh svg { width: 22px; } .mint-stats { gap: 8px; margin-bottom: 28px; } .mint-stat { display: block; padding: 15px 12px; } .mint-stat > svg { width: 26px; height: 26px; margin-bottom: 12px; } .mint-stat strong { font-size: 30px; } .mint-stat span { font-size: 11px; } .mint-section-heading h3 { font-size: 21px; gap: 10px; } .mint-section-heading p { font-size: 13px; } .mint-appointment-body { grid-template-columns: 1fr; } .mint-controls { grid-template-columns: 1fr 1fr; padding-left: 0; padding-top: 15px; border-left: 0; border-top: 1px solid #e5efeb; } .mint-patient-heading h4 { font-size: 20px; } .mint-patient-heading .mint-eyebrow { letter-spacing: 2px; } .mint-status { padding: 7px 9px; font-size: 10px; } .mint-actions { gap: 12px; } .mint-actions button { font-size: 13px; padding: 12px; gap: 9px; } }
-@media (max-width: 390px) { .mint-profile-person { flex-direction: column; align-items: flex-start; } .mint-details { grid-template-columns: 1fr; } .mint-patient-heading { flex-direction: column; } .mint-actions { flex-direction: column; } }
+
+.mint-patient-heading .mint-eyebrow { margin-left: 0; }
+
+@media (max-width: 1200px) {
+  .mint-shell { grid-template-columns: 220px minmax(0, 1fr); padding-right: 0; }
+  .mint-layout { gap: 20px; }
+  .mint-stat { gap: 8px; padding-inline: 12px; }
+  .mint-panel, .mint-profile { padding-inline: 18px; }
+}
+@media (max-width: 1020px) {
+  .mint-layout { grid-template-columns: minmax(0, 1fr); }
+  .mint-sidebar { min-height: 760px; }
+  .mint-profile { min-height: 0; }
+  .mint-profile-info { padding-top: 18px; }
+}
+@media (max-width: 700px) {
+  .mint-shell { width: calc(100% - 32px); display: block; padding: 16px 0 42px; }
+  .mint-sidebar { min-height: 0; padding: 12px; border-radius: 18px; }
+  .mint-brand { margin: 0 0 12px; border-radius: 10px; min-height: 0; padding: 4px 10px; }
+  .mint-brand img { width: 180px; }
+  .mint-sidebar nav { display: flex; overflow-x: auto; }
+  .mint-sidebar nav button { white-space: nowrap; padding: 8px 10px; font-size: 13px; }
+  .mint-help { margin: 6px 0 0; align-self: flex-start; font-size: 13px; min-height: 36px; }
+  .mint-main { padding-top: 28px; }
+  .mint-main .profile-editor { margin-top: 0; }
+  .mint-header { align-items: flex-start; flex-wrap: wrap; padding-bottom: 20px; margin-bottom: 20px; }
+  .mint-stats { gap: 8px; margin-bottom: 20px; }
+  .mint-stat { flex-direction: column; min-height: 118px; padding: 10px; border-radius: 15px; }
+  .mint-stat > svg { margin-top: 0; width: 23px; height: 23px; }
+  .mint-stat strong { font-size: 26px; }
+  .mint-stat span { font-size: 11px; }
+  .mint-panel { padding: 16px; }
+  .mint-section-heading h2 { font-size: 16px; gap: 8px; }
+  .mint-section-heading .mint-text-button { font-size: 12px; }
+  .mint-quick { margin-top: 20px; }
+  .mint-quick h2 { margin: 4px 0 16px; }
+  .mint-quick > div { gap: 8px; }
+  .mint-quick button { padding: 10px 8px; min-height: 104px; font-size: 11px; }
+  .mint-footer-inner { width: calc(100% - 32px); padding-top: 28px; }
+  .mint-footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .mint-footer-grid > :first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 400px) {
+  .mint-quick button { grid-template-columns: 1fr; }
+  .mint-details, .mint-controls { grid-template-columns: 1fr; }
+  .mint-patient-heading { flex-wrap: wrap; }
+}
+.mint-footer-logo { width: min(250px, 100%); padding: 4px 12px; border-radius: 10px; background: #fff; }
+.mint-footer-logo img { display: block; }
